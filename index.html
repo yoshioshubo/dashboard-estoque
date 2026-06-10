@@ -1036,6 +1036,40 @@ init();
   </div>
 
   <div class="audit-section">
+    <div class="audit-section-title">🧠 Análise interpretativa</div>
+
+    <div style="background:#fff8e1;border-left:4px solid #e67e22;border-radius:0 8px 8px 0;padding:16px 20px;margin-bottom:14px">
+      <div style="font-size:0.78rem;font-weight:700;color:#b7770d;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">⚠️ Indício de substituição de produto — IPA e Xeque Mate</div>
+      <p style="font-size:0.88rem;color:#555;line-height:1.7;margin:0">
+        O produto <strong>IPA</strong> apresenta 32 vendas registradas nos dois dias, mas o estoque caiu apenas 7 unidades — uma discrepância de +25. Isso significa que em média a cada 4 IPAs cobrados no sistema, apenas 1 saiu fisicamente do estoque. O cenário mais provável é que o funcionário esteja registrando IPA (R$19) no sistema e entregando Eisen Pilsen (R$14) ao cliente, embolsando ou desviando a diferença de R$5 por unidade.
+        O <strong>Xeque Mate</strong> apresenta o padrão mais grave: 166 vendas registradas em dois dias, mas apenas 104 unidades saíram do estoque — sobra de +62 vendas sem lastro físico. No dia 07, foram registradas 33 vendas com apenas 4 unidades saindo do estoque. Isso sugere lançamento sistemático de vendas que não correspondem à entrega real, possivelmente como mecanismo para justificar diferenças de caixa ou desviar valores.
+      </p>
+    </div>
+
+    <div style="background:#fdecea;border-left:4px solid #e74c3c;border-radius:0 8px 8px 0;padding:16px 20px;margin-bottom:14px">
+      <div style="font-size:0.78rem;font-weight:700;color:#a93226;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">🚨 Indício de consumo ou saída não registrada — Heineken e Amstel</div>
+      <p style="font-size:0.88rem;color:#555;line-height:1.7;margin:0">
+        A <strong>Heineken</strong> apresenta saída de 140 unidades acima do total vendido nos dois dias (−62 no D6 e −78 no D7), com o gap crescendo de um dia para o outro. A preço médio de R$20 por unidade, isso representa aproximadamente <strong>R$2.800 em produto saindo sem registro</strong> em apenas dois dias. O crescimento do desvio entre os dias sugere que não é erro de contagem — é um padrão que se repete e se intensifica.
+        O <strong>Amstel</strong> segue o mesmo padrão com agravante: no dia 07, o estoque foi de 72 para zero, mas apenas 18 unidades foram vendidas — 54 unidades sem registro em um único dia. Ou houve consumo interno em larga escala, ou as garrafas estão saindo sem passar pelo sistema.
+      </p>
+    </div>
+
+    <div style="background:#fef9f0;border-left:4px solid #f39c12;border-radius:0 8px 8px 0;padding:16px 20px;margin-bottom:14px">
+      <div style="font-size:0.78rem;font-weight:700;color:#9a6a00;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">⚡ Indício de troca entre variantes — Monster Ultra vs Monster Normal</div>
+      <p style="font-size:0.88rem;color:#555;line-height:1.7;margin:0">
+        O <strong>Monster Ultra</strong> teve 14 unidades removidas do estoque no dia 06 com apenas 1 venda registrada — 13 unidades desaparecidas sem lançamento. No mesmo dia, o <strong>Monster Normal</strong> teve 27 vendas registradas mas apenas 8 unidades saíram do estoque. O padrão sugere que Monster Ultra está sendo entregue fisicamente enquanto Monster Normal é lançado no sistema, ou vice-versa. Como ambos têm o mesmo preço (R$25), o motivo aqui pode ser simplesmente descuido operacional ou confusão entre variantes pelo funcionário.
+      </p>
+    </div>
+
+    <div style="background:#eaf6fb;border-left:4px solid #2980b9;border-radius:0 8px 8px 0;padding:16px 20px;margin-bottom:20px">
+      <div style="font-size:0.78rem;font-weight:700;color:#1a5276;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">ℹ️ Observação sobre Águas — provável diferença de unidade de medida</div>
+      <p style="font-size:0.88rem;color:#555;line-height:1.7;margin:0">
+        A <strong>Água sem gás</strong> apresenta divergência extrema no dia 06 (211 vendidas, apenas 36 saíram do estoque), mas no dia 07 o comportamento inverte (59 vendidas, 76 saíram). Essa oscilação nos dois sentidos indica que provavelmente a contagem de estoque é feita em <strong>caixas ou fardos</strong> enquanto as vendas são registradas em <strong>unidades individuais</strong>. Recomenda-se alinhar a unidade de medida entre o sistema de vendas e a planilha de contagem antes de incluir este item na análise de auditoria.
+      </p>
+    </div>
+  </div>
+
+  <div class="audit-section">
     <div class="audit-section-title">📋 Divergência por produto</div>
     <p style="font-size:0.82rem;color:#777;margin-bottom:14px">
       <strong>Dif =</strong> vendas + variação estoque.
