@@ -238,6 +238,78 @@
   thead th.col-sorted-asc  .sort-icon::after  { content: ' ▲'; opacity: 1; }
   thead th.col-sorted-desc { background: #2c2c4e; }
   thead th.col-sorted-desc .sort-icon::after { content: ' ▼'; opacity: 1; }
+
+  /* ── Abas principais ── */
+  .main-tabs {
+    display: flex;
+    gap: 0;
+    background: #1a1a2e;
+    padding: 0 30px;
+  }
+  .main-tab {
+    padding: 12px 24px;
+    color: rgba(255,255,255,0.55);
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+  }
+  .main-tab:hover { color: rgba(255,255,255,0.85); }
+  .main-tab.active { color: white; border-bottom-color: #4a90e2; }
+
+  /* ── Auditoria ── */
+  .audit-container { padding: 24px 30px; }
+  .audit-section { margin-bottom: 28px; }
+  .audit-section-title {
+    font-size: 0.78rem; font-weight: 700; color: #555;
+    text-transform: uppercase; letter-spacing: 0.6px;
+    margin-bottom: 12px; padding-bottom: 8px;
+    border-bottom: 2px solid #e8e8e8;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .audit-cards { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 20px; }
+  .audit-card {
+    background: white; border-radius: 10px; padding: 16px 20px;
+    flex: 1; min-width: 140px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+  }
+  .audit-card.red   { border-left: 4px solid #e74c3c; }
+  .audit-card.amber { border-left: 4px solid #e67e22; }
+  .audit-card.blue  { border-left: 4px solid #4a90e2; }
+  .audit-card.green { border-left: 4px solid #27ae60; }
+  .audit-card-label { font-size: 0.72rem; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .audit-card-value { font-size: 1.5rem; font-weight: 700; }
+  .audit-card.red   .audit-card-value { color: #e74c3c; }
+  .audit-card.amber .audit-card-value { color: #e67e22; }
+  .audit-card.blue  .audit-card-value { color: #4a90e2; }
+  .audit-card.green .audit-card-value { color: #27ae60; }
+
+  .audit-table {
+    width: 100%; border-collapse: collapse;
+    background: white; border-radius: 10px; overflow: hidden;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+    font-size: 0.85rem; margin-bottom: 6px;
+  }
+  .audit-table thead tr { background: #1a1a2e; color: white; }
+  .audit-table thead th { padding: 11px 13px; text-align: left; font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.4px; white-space: nowrap; }
+  .audit-table th.num, .audit-table td.num { text-align: right; }
+  .audit-table tbody tr { border-bottom: 1px solid #f0f0f0; }
+  .audit-table tbody tr:hover { background: #f7f9fc; }
+  .audit-table tbody tr.row-danger { background: #fff5f5; }
+  .audit-table tbody tr.row-warn   { background: #fffbf0; }
+  .audit-table td { padding: 10px 13px; }
+  .badge { display: inline-block; padding: 3px 9px; border-radius: 10px; font-size: 0.72rem; font-weight: 700; }
+  .badge-danger { background: #fde8e8; color: #c0392b; }
+  .badge-warn   { background: #fef3cd; color: #d68910; }
+  .badge-info   { background: #e8f4fd; color: #2980b9; }
+  .badge-ok     { background: #e8f8f0; color: #1e8449; }
+  .diff-neg { color: #e74c3c; font-weight: 700; }
+  .diff-pos { color: #e67e22; font-weight: 700; }
+  .diff-ok  { color: #27ae60; font-weight: 700; }
 </style>
 </head>
 <body>
@@ -249,6 +321,12 @@
   </div>
 </header>
 
+<div class="main-tabs">
+  <button class="main-tab active" onclick="showTab('estoque')">📊 Estoque</button>
+  <button class="main-tab" onclick="showTab('auditoria')">🔍 Auditoria</button>
+</div>
+
+<div id="tab-estoque">
 <div class="filters">
   <div class="filter-group">
     <label>Modo de filtro</label>
@@ -812,7 +890,217 @@ function exportCSV() {
   a.click();
 }
 
+// ─── TABS ─────────────────────────────────────────────────────────────────────
+function showTab(tab) {
+  document.getElementById('tab-estoque').style.display  = tab === 'estoque'   ? '' : 'none';
+  document.getElementById('tab-auditoria').style.display = tab === 'auditoria' ? '' : 'none';
+  document.querySelectorAll('.main-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.main-tab').forEach(b => {
+    if (b.textContent.includes(tab === 'estoque' ? 'Estoque' : 'Auditoria')) b.classList.add('active');
+  });
+  if (tab === 'auditoria') renderAudit();
+}
+
+// ─── AUDITORIA ────────────────────────────────────────────────────────────────
+function renderAudit() {
+  const estoque = [
+    // [produto, ini06, fin06, ini07, fin07, preco_aprox]
+    ['Eisen Pilsen',    976,500, 816,539, 14],
+    ['Heineken',        795,491, 723,588, 20],
+    ['Amstel',          156, 86,  72,  0, 14],
+    ['Praya',            20, 13,  16, 12, 19],
+    ['Heineken Zero',    88, 88,  88, 85, 20],
+    ['Unfiltered',       65, 38,  38, 38, 14],
+    ['Session',           0,  0,   0,  0, 19],
+    ['IPA',              69, 62,  62, 62, 19],
+    ['Pale Ale',         63, 63,  63, 62, 19],
+    ['Lagunitas',        21,  5,   5,  5, 25],
+    ['Sol',             236,191, 191,191, 16],
+    ['Sol Zero',         45, 45,  45, 45, 16],
+    ['Blue Moon',         6,  1,   1,  0, 25],
+    ['Águas',           112, 76, 136, 60,  6],
+    ['Água c/ gás',     127, 58, 118, 83,  8],
+    ['Red Bull',         86, 64,  64, 62, 25],
+    ['Red Bull Tropical',32, 28,  28, 25, 25],
+    ['Monster Normal',   29, 21,  21, 20, 25],
+    ['Monster Ultra',    15,  1,   1,  0, 25],
+    ['Monster Zero',     19, 18,  18, 18, 25],
+    ['Monster Mango',    12, 14,  14, 14, 25],
+    ['Monster Mango Zero',10, 7,   7,  7, 25],
+    ['Monster Pipeline',  9,  8,   8,  8, 25],
+    ['Xeque Mate',      128, 28,  28, 24, 25],
+  ];
+  const vendas06 = {
+    'Eisen Pilsen':474,'Heineken':242,'Amstel':54,'Praya':15,'Heineken Zero':1,
+    'Unfiltered':12,'Session':2,'IPA':20,'Lagunitas':12,'Sol':31,'Sol Zero':4,
+    'Blue Moon':9,'Águas':211,'Água c/ gás':88,'Red Bull':22,'Monster Normal':27,
+    'Monster Ultra':1,'Monster Zero':7,'Xeque Mate':133
+  };
+  const vendas07 = {
+    'Eisen Pilsen':201,'Heineken':57,'Amstel':18,'Praya':4,'Heineken Zero':3,
+    'Unfiltered':9,'Session':1,'IPA':12,'Pale Ale':3,'Sol':5,'Sol Zero':2,
+    'Blue Moon':2,'Águas':59,'Água c/ gás':11,'Red Bull':7,'Monster Normal':7,
+    'Monster Ultra':2,'Monster Zero':2,'Monster Pipeline':1,'Xeque Mate':33
+  };
+
+  let rows = [];
+  let totalFuga = 0, totalFantasma = 0, totalOk = 0;
+
+  estoque.forEach(([p, i06, f06, i07, f07, preco]) => {
+    const var06 = f06 - i06;
+    const var07 = f07 - i07;
+    const v06 = vendas06[p] || 0;
+    const v07 = vendas07[p] || 0;
+    const dif06 = v06 + var06; // positivo = vendeu mais que baixou; negativo = baixou mais que vendeu
+    const dif07 = v07 + var07;
+    const difTotal = dif06 + dif07;
+    const perdaEst = Math.abs(Math.min(0, dif06) + Math.min(0, dif07)) * preco;
+    const tipo = difTotal < -5 ? 'fuga' : difTotal > 5 ? 'fantasma' : 'ok';
+    if (tipo === 'fuga')     totalFuga++;
+    else if (tipo === 'fantasma') totalFantasma++;
+    else totalOk++;
+    rows.push({p, var06, var07, v06, v07, dif06, dif07, difTotal, perdaEst, preco, tipo});
+  });
+
+  rows.sort((a,b) => Math.abs(b.difTotal) - Math.abs(a.difTotal));
+
+  const totalPerdaFuga = rows.filter(r=>r.tipo==='fuga').reduce((s,r)=>s+r.perdaEst,0);
+
+  const cont = document.getElementById('audit-body');
+  cont.innerHTML = '';
+
+  // Cards de resumo
+  document.getElementById('a-fuga').textContent = totalFuga;
+  document.getElementById('a-fantasma').textContent = totalFantasma;
+  document.getElementById('a-ok').textContent = totalOk;
+  document.getElementById('a-perda').textContent = 'R$ ' + totalPerdaFuga.toLocaleString('pt-BR', {minimumFractionDigits:0, maximumFractionDigits:0});
+
+  // Linhas
+  rows.forEach(r => {
+    if (r.tipo === 'ok' && r.v06 === 0 && r.v07 === 0) return;
+    const rowClass = r.tipo === 'fuga' ? 'row-danger' : r.tipo === 'fantasma' ? 'row-warn' : '';
+    const badge = r.tipo === 'fuga'
+      ? '<span class="badge badge-danger">Saída s/ registro</span>'
+      : r.tipo === 'fantasma'
+      ? '<span class="badge badge-warn">Venda > estoque</span>'
+      : '<span class="badge badge-ok">OK</span>';
+    const d06class = r.dif06 < -3 ? 'diff-neg' : r.dif06 > 3 ? 'diff-pos' : 'diff-ok';
+    const d07class = r.dif07 < -3 ? 'diff-neg' : r.dif07 > 3 ? 'diff-pos' : 'diff-ok';
+    const dtclass  = r.difTotal < -5 ? 'diff-neg' : r.difTotal > 5 ? 'diff-pos' : 'diff-ok';
+    const perda = r.perdaEst > 0 ? `R$ ${r.perdaEst.toLocaleString('pt-BR',{minimumFractionDigits:0})}` : '—';
+    cont.innerHTML += `
+      <tr class="${rowClass}">
+        <td><strong>${r.p}</strong></td>
+        <td class="num">${r.var06}</td><td class="num">${r.v06}</td><td class="num ${d06class}">${r.dif06>0?'+':''}${r.dif06}</td>
+        <td class="num">${r.var07}</td><td class="num">${r.v07}</td><td class="num ${d07class}">${r.dif07>0?'+':''}${r.dif07}</td>
+        <td class="num ${dtclass}"><strong>${r.difTotal>0?'+':''}${r.difTotal}</strong></td>
+        <td class="num">${perda}</td>
+        <td>${badge}</td>
+      </tr>`;
+  });
+}
+
 init();
 </script>
+
+<!-- ── ABA AUDITORIA ── -->
+<div id="tab-auditoria" style="display:none">
+<div class="audit-container">
+
+  <div class="audit-section">
+    <div class="audit-section-title">🔍 Resumo de divergências — 06 e 07/06/2026</div>
+    <div class="audit-cards">
+      <div class="audit-card red">
+        <div class="audit-card-label">Saída sem registro</div>
+        <div class="audit-card-value" id="a-fuga">—</div>
+        <div style="font-size:0.72rem;color:#888;margin-top:4px">estoque baixou > vendas</div>
+      </div>
+      <div class="audit-card amber">
+        <div class="audit-card-label">Venda > estoque baixou</div>
+        <div class="audit-card-value" id="a-fantasma">—</div>
+        <div style="font-size:0.72rem;color:#888;margin-top:4px">possível substituição de produto</div>
+      </div>
+      <div class="audit-card green">
+        <div class="audit-card-label">Sem divergência</div>
+        <div class="audit-card-value" id="a-ok">—</div>
+        <div style="font-size:0.72rem;color:#888;margin-top:4px">venda ≈ variação estoque</div>
+      </div>
+      <div class="audit-card red">
+        <div class="audit-card-label">Impacto estimado (fuga)</div>
+        <div class="audit-card-value" id="a-perda">—</div>
+        <div style="font-size:0.72rem;color:#888;margin-top:4px">unidades × preço unitário</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="audit-section">
+    <div class="audit-section-title">📋 Divergência por produto</div>
+    <p style="font-size:0.82rem;color:#777;margin-bottom:14px">
+      <strong>Dif =</strong> vendas + variação estoque.
+      <span style="color:#e74c3c">Negativo</span> = estoque baixou mais que as vendas (saída sem registro).
+      <span style="color:#e67e22">Positivo</span> = vendas registradas superam a queda do estoque (possível substituição).
+    </p>
+    <table class="audit-table">
+      <thead>
+        <tr>
+          <th>Produto</th>
+          <th class="num">Var D6</th><th class="num">Vnd D6</th><th class="num">Dif D6</th>
+          <th class="num">Var D7</th><th class="num">Vnd D7</th><th class="num">Dif D7</th>
+          <th class="num">Total</th>
+          <th class="num">Impacto R$</th>
+          <th>Tipo</th>
+        </tr>
+      </thead>
+      <tbody id="audit-body"></tbody>
+    </table>
+  </div>
+
+  <div class="audit-section">
+    <div class="audit-section-title">⚠️ Hipóteses de substituição identificadas</div>
+    <table class="audit-table">
+      <thead>
+        <tr><th>Registrado no sistema</th><th>Possivelmente entregue</th><th>Evidência</th><th>Risco</th></tr>
+      </thead>
+      <tbody>
+        <tr class="row-warn">
+          <td><strong>IPA</strong> (R$19)</td>
+          <td><strong>Eisen Pilsen</strong> (R$14)</td>
+          <td style="font-size:0.82rem;color:#555">IPA: 32 vendas, estoque caiu apenas 7. Pilsen cai mais que o vendido nos 2 dias.</td>
+          <td><span class="badge badge-danger">Alta</span></td>
+        </tr>
+        <tr class="row-warn">
+          <td><strong>Xeque Mate</strong> (R$25)</td>
+          <td><strong>outro produto</strong></td>
+          <td style="font-size:0.82rem;color:#555">166 vendas registradas, estoque caiu apenas 104. +62 unidades cobradas sem sair do estoque.</td>
+          <td><span class="badge badge-danger">Alta</span></td>
+        </tr>
+        <tr class="row-warn">
+          <td><strong>Monster Normal</strong> (R$25)</td>
+          <td><strong>Monster Ultra</strong> (R$25)</td>
+          <td style="font-size:0.82rem;color:#555">Monster Ultra: -14 no estoque D6, apenas 1 vendido. Monster Normal: vendeu 34, estoque caiu 9.</td>
+          <td><span class="badge badge-warn">Média</span></td>
+        </tr>
+        <tr>
+          <td><strong>Heineken</strong> (R$20)</td>
+          <td><strong>saída não registrada</strong></td>
+          <td style="font-size:0.82rem;color:#555">140 unidades a mais saíram do que foram vendidas nos 2 dias. Padrão consistente e crescente.</td>
+          <td><span class="badge badge-danger">Alta</span></td>
+        </tr>
+        <tr>
+          <td><strong>Amstel</strong> (R$14)</td>
+          <td><strong>saída não registrada</strong></td>
+          <td style="font-size:0.82rem;color:#555">Piora de D6 (-16) para D7 (-54). 72→0 no estoque com apenas 18 vendidas no D7.</td>
+          <td><span class="badge badge-danger">Alta</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+</div>
+
+<!-- fecha tab-estoque -->
+</div>
+
 </body>
 </html>
