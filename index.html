@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard de Estoque</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #333; }
+
+  header {
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    color: white;
+    padding: 20px 30px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+  header h1 { font-size: 1.5rem; font-weight: 600; }
+  header span { font-size: 0.85rem; opacity: 0.7; }
+
+  .filters {
+    background: white;
+    padding: 16px 30px;
+    display: flex;
+    gap: 24px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    border-bottom: 1px solid #e0e0e0;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .filter-group { display: flex; flex-direction: column; gap: 4px; }
+  .filter-group label { font-size: 0.75rem; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
+  .filter-group select, .filter-group input {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    background: white;
+    color: #333;
+    cursor: pointer;
+    min-width: 140px;
+  }
+  .filter-group select:focus, .filter-group input:focus {
+    outline: none;
+    border-color: #4a90e2;
+    box-shadow: 0 0 0 3px rgba(74,144,226,0.15);
+  }
+  .filter-tabs { display: flex; gap: 6px; }
+  .tab-btn {
+    padding: 8px 16px;
+    border: 1px solid #ddd;
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+  }
+  .tab-btn.active {
+    background: #4a90e2;
+    color: white;
+    border-color: #4a90e2;
+  }
+  .tab-btn:hover:not(.active) { background: #f5f5f5; }
+
+  .period-inputs { display: flex; gap: 8px; align-items: flex-end; }
+
+  .summary-cards {
+    display: flex;
+    gap: 16px;
+    padding: 20px 30px;
+    flex-wrap: wrap;
+  }
+  .card {
+    background: white;
+    border-radius: 10px;
+    padding: 16px 20px;
+    flex: 1;
+    min-width: 160px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+    border-left: 4px solid #ccc;
+  }
+  .card.blue { border-color: #4a90e2; }
+  .card.green { border-color: #27ae60; }
+  .card.orange { border-color: #e67e22; }
+  .card.red { border-color: #e74c3c; }
+  .card.purple { border-color: #9b59b6; }
+  .card-label { font-size: 0.72rem; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .card-value { font-size: 1.6rem; font-weight: 700; }
+  .card.blue .card-value { color: #4a90e2; }
+  .card.green .card-value { color: #27ae60; }
+  .card.orange .card-value { color: #e67e22; }
+  .card.red .card-value { color: #e74c3c; }
+  .card.purple .card-value { color: #9b59b6; }
+
+  .table-container {
+    padding: 0 30px 30px;
+    overflow-x: auto;
+  }
+  .table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .table-header h2 { font-size: 1rem; color: #555; }
+  .search-box {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    width: 220px;
+  }
+  .search-box:focus { outline: none; border-color: #4a90e2; box-shadow: 0 0 0 3px rgba(74,144,226,0.15); }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+    font-size: 0.88rem;
+  }
+  thead tr { background: #1a1a2e; color: white; }
+  thead th {
+    padding: 13px 14px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+  }
+  thead th:hover { background: #2c2c4e; }
+  thead th .sort-icon { margin-left: 4px; opacity: 0.5; font-size: 0.7rem; }
+  thead th.sorted .sort-icon { opacity: 1; }
+
+  tbody tr { border-bottom: 1px solid #f0f0f0; transition: background 0.1s; }
+  tbody tr:hover { background: #f7f9fc; }
+  tbody tr.category-header { background: #f0f2f5; }
+  tbody tr.category-header td {
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 8px 14px;
+  }
+
+  td { padding: 10px 14px; }
+  td.product { font-weight: 500; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  td.negative { color: #e74c3c; font-weight: 600; }
+  td.positive { color: #27ae60; font-weight: 600; }
+  td.zero { color: #aaa; }
+  td.warning { color: #e67e22; font-weight: 600; }
+  td.editable {
+    cursor: pointer;
+    background: #fffbf0;
+  }
+  td.editable:hover { background: #fff3cd; }
+  td input.inline-edit {
+    width: 80px;
+    padding: 4px 8px;
+    border: 2px solid #4a90e2;
+    border-radius: 4px;
+    text-align: right;
+    font-size: 0.88rem;
+    font-family: inherit;
+  }
+
+  .day-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    background: #e8f0fe;
+    color: #4a90e2;
+    margin-left: 6px;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #aaa;
+  }
+  .empty-state p { font-size: 1rem; margin-top: 8px; }
+
+  .multi-day-note {
+    background: #e8f4fd;
+    border: 1px solid #b8d8f0;
+    border-radius: 6px;
+    padding: 10px 16px;
+    font-size: 0.82rem;
+    color: #2980b9;
+    margin: 0 30px 16px;
+  }
+
+  .no-data { color: #ccc; font-style: italic; }
+
+  .btn-export {
+    padding: 8px 16px;
+    background: #27ae60;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: background 0.2s;
+  }
+  .btn-export:hover { background: #219a52; }
+
+  .btn-sort-vendas {
+    padding: 8px 16px;
+    background: white;
+    color: #9b59b6;
+    border: 2px solid #9b59b6;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 700;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-sort-vendas:hover { background: #9b59b6; color: white; }
+  .btn-sort-vendas.active-asc  { background: #9b59b6; color: white; }
+  .btn-sort-vendas.active-desc { background: #6c3483; color: white; border-color: #6c3483; }
+
+  thead th.col-sorted-asc  { background: #2c2c4e; }
+  thead th.col-sorted-asc  .sort-icon::after  { content: ' ▲'; opacity: 1; }
+  thead th.col-sorted-desc { background: #2c2c4e; }
+  thead th.col-sorted-desc .sort-icon::after { content: ' ▼'; opacity: 1; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>📦 Dashboard de Controle de Estoque</h1>
+    <span>Contagem diária · Clique em "Itens Vendidos" para editar</span>
+  </div>
+</header>
+
+<div class="filters">
+  <div class="filter-group">
+    <label>Modo de filtro</label>
+    <div class="filter-tabs">
+      <button class="tab-btn active" onclick="setMode('day')">Por Dia</button>
+      <button class="tab-btn" onclick="setMode('month')">Por Mês</button>
+      <button class="tab-btn" onclick="setMode('period')">Período</button>
+    </div>
+  </div>
+
+  <div class="filter-group" id="fg-day">
+    <label>Dia</label>
+    <select id="sel-day" onchange="render()">
+      <option value="all">Todos os dias</option>
+    </select>
+  </div>
+
+  <div class="filter-group" id="fg-month" style="display:none">
+    <label>Mês</label>
+    <select id="sel-month" onchange="render()">
+      <option value="all">Todos os meses</option>
+    </select>
+  </div>
+
+  <div class="filter-group" id="fg-period" style="display:none">
+    <label>De</label>
+    <div class="period-inputs">
+      <input type="date" id="date-from" onchange="render()">
+      <span style="padding-bottom:9px;color:#999">até</span>
+      <input type="date" id="date-to" onchange="render()">
+    </div>
+  </div>
+
+  <div class="filter-group">
+    <label>Ordenar por vendas</label>
+    <button class="btn-sort-vendas" id="btn-sort-vendas" onclick="toggleSortVendas()">
+      🛒 Mais vendidos <span id="sort-vendas-icon">↕</span>
+    </button>
+  </div>
+
+  <div class="filter-group">
+    <label>&nbsp;</label>
+    <button class="btn-export" onclick="exportCSV()">⬇ Exportar CSV</button>
+  </div>
+</div>
+
+<div class="summary-cards">
+  <div class="card blue"><div class="card-label">Itens únicos</div><div class="card-value" id="s-items">—</div></div>
+  <div class="card green"><div class="card-label">Total Início</div><div class="card-value" id="s-inicio">—</div></div>
+  <div class="card orange"><div class="card-label">Total Final</div><div class="card-value" id="s-final">—</div></div>
+  <div class="card red"><div class="card-label">Variação Estoque</div><div class="card-value" id="s-variacao">—</div></div>
+  <div class="card purple"><div class="card-label">Itens Vendidos</div><div class="card-value" id="s-vendidos">—</div></div>
+</div>
+
+<div id="multi-day-note" class="multi-day-note" style="display:none">
+  ℹ️ <strong>Múltiplos dias selecionados:</strong> Início = primeiro dia do período · Final = último dia do período · Itens Vendidos = soma do período
+</div>
+
+<div class="table-container">
+  <div class="table-header">
+    <h2 id="table-title">Estoque</h2>
+    <input class="search-box" type="text" placeholder="🔍 Buscar produto..." oninput="filterSearch(this.value)">
+  </div>
+  <table id="main-table">
+    <thead>
+      <tr>
+        <th onclick="sortBy('produto')">Produto <span class="sort-icon">↕</span></th>
+        <th onclick="sortBy('data')" style="text-align:center">Data <span class="sort-icon">↕</span></th>
+        <th onclick="sortBy('inicio')" style="text-align:right">Início <span class="sort-icon">↕</span></th>
+        <th onclick="sortBy('final')" style="text-align:right">Final <span class="sort-icon">↕</span></th>
+        <th onclick="sortBy('variacao')" style="text-align:right">Variação Estoque <span class="sort-icon">↕</span></th>
+        <th onclick="sortBy('vend')" style="text-align:right">Itens Vendidos <span class="sort-icon">↕</span></th>
+        <th onclick="sortBy('diferenca')" style="text-align:right">Diferença <span class="sort-icon">↕</span></th>
+      </tr>
+    </thead>
+    <tbody id="table-body"></tbody>
+  </table>
+  <div id="empty-state" class="empty-state" style="display:none">
+    <p>Nenhum dado encontrado para o filtro selecionado.</p>
+  </div>
+</div>
+
+<script>
+// ─── RAW DATA ────────────────────────────────────────────────────────────────
+const rawData = [
+  // date, produto, inicio, final
+  ["2025-06-06","Eisen Pilsen",976,500],
+  ["2025-06-06","Heineken",795,491],
+  ["2025-06-06","Amstel",156,86],
+  ["2025-06-06","Praya",20,13],
+  ["2025-06-06","Heineken Zero",88,88],
+  ["2025-06-06","Unfiltered",65,38],
+  ["2025-06-06","Session",0,0],
+  ["2025-06-06","IPA",69,62],
+  ["2025-06-06","Weissbier",30,28],
+  ["2025-06-06","Pale Ale",63,63],
+  ["2025-06-06","Lagunitas",21,5],
+  ["2025-06-06","Sol",236,191],
+  ["2025-06-06","Sol Zero",45,45],
+  ["2025-06-06","Blue Moon",6,1],
+  ["2025-06-06","Ultra",0,0],
+  ["2025-06-06","Águas",112,76],
+  ["2025-06-06","Água c/ gás",127,58],
+  ["2025-06-06","Suco Pêssego",19,18],
+  ["2025-06-06","Suco Manga",29,19],
+  ["2025-06-06","Suco Maracujá",12,10],
+  ["2025-06-06","Limonada Tropical",11,11],
+  ["2025-06-06","Limonada Clássica",11,9],
+  ["2025-06-06","Suco Goiaba",21,20],
+  ["2025-06-06","Suco Uva",19,19],
+  ["2025-06-06","Citrus",26,11],
+  ["2025-06-06","Tônica",25,43],
+  ["2025-06-06","Fanta Laranja",17,17],
+  ["2025-06-06","Fanta Uva",3,0],
+  ["2025-06-06","Fanta Guaraná",17,8],
+  ["2025-06-06","Fanta Guaraná Zero",17,12],
+  ["2025-06-06","Sprite",9,0],
+  ["2025-06-06","Sprite Zero",19,14],
+  ["2025-06-06","Coca Zero Garrafa",38,21],
+  ["2025-06-06","Coca Cola Garrafa",63,32],
+  ["2025-06-06","Coca Cola Zero",16,0],
+  ["2025-06-06","Coca Cola",22,5],
+  ["2025-06-06","Monster Normal",29,21],
+  ["2025-06-06","Monster Zero",19,18],
+  ["2025-06-06","Monster Ultra",15,1],
+  ["2025-06-06","Monster Mango",12,14],
+  ["2025-06-06","Monster Mango Zero",10,7],
+  ["2025-06-06","Monster Pipeline",9,8],
+  ["2025-06-06","Red Bull",86,64],
+  ["2025-06-06","Red Bull Tropical",32,28],
+  ["2025-06-06","Xeque Mate",128,28],
+
+  ["2025-06-07","Eisen Pilsen",816,539],
+  ["2025-06-07","Heineken",723,588],
+  ["2025-06-07","Amstel",72,0],
+  ["2025-06-07","Praya",16,12],
+  ["2025-06-07","Heineken Zero",88,85],
+  ["2025-06-07","Unfiltered",38,38],
+  ["2025-06-07","Session",0,0],
+  ["2025-06-07","IPA",62,62],
+  ["2025-06-07","Weissbier",28,28],
+  ["2025-06-07","Pale Ale",63,62],
+  ["2025-06-07","Lagunitas",5,5],
+  ["2025-06-07","Sol",191,191],
+  ["2025-06-07","Sol Zero",45,45],
+  ["2025-06-07","Blue Moon",1,0],
+  ["2025-06-07","Ultra",0,0],
+  ["2025-06-07","Águas",136,60],
+  ["2025-06-07","Água c/ gás",118,83],
+  ["2025-06-07","Suco Pêssego",18,18],
+  ["2025-06-07","Suco Manga",19,19],
+  ["2025-06-07","Suco Maracujá",10,10],
+  ["2025-06-07","Limonada Tropical",11,11],
+  ["2025-06-07","Limonada Clássica",9,9],
+  ["2025-06-07","Suco Goiaba",20,20],
+  ["2025-06-07","Suco Uva",19,18],
+  ["2025-06-07","Citrus",11,11],
+  ["2025-06-07","Tônica",43,42],
+  ["2025-06-07","Fanta Laranja",17,17],
+  ["2025-06-07","Fanta Uva",0,0],
+  ["2025-06-07","Fanta Guaraná",8,8],
+  ["2025-06-07","Fanta Guaraná Zero",12,12],
+  ["2025-06-07","Sprite",0,0],
+  ["2025-06-07","Sprite Zero",14,10],
+  ["2025-06-07","Coca Zero Garrafa",21,0],
+  ["2025-06-07","Coca Cola Garrafa",32,14],
+  ["2025-06-07","Coca Cola Zero",0,0],
+  ["2025-06-07","Coca Cola",5,0],
+  ["2025-06-07","Monster Normal",21,20],
+  ["2025-06-07","Monster Zero",18,18],
+  ["2025-06-07","Monster Ultra",1,0],
+  ["2025-06-07","Monster Mango",14,14],
+  ["2025-06-07","Monster Mango Zero",7,7],
+  ["2025-06-07","Monster Pipeline",8,8],
+  ["2025-06-07","Red Bull",64,62],
+  ["2025-06-07","Red Bull Tropical",28,25],
+  ["2025-06-07","Xeque Mate",28,24],
+];
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let mode = 'day';
+let searchTerm = '';
+let sortCol = null;
+let sortDir = 1;
+// key: "date|produto" → itens vendidos (editável)
+let vendidos = JSON.parse(localStorage.getItem('vendidos') || '{}');
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+function init() {
+  const dates = [...new Set(rawData.map(r => r[0]))].sort();
+  const months = [...new Set(dates.map(d => d.slice(0,7)))].sort();
+
+  const selDay = document.getElementById('sel-day');
+  dates.forEach(d => {
+    const opt = document.createElement('option');
+    opt.value = d;
+    opt.textContent = fmtDate(d);
+    selDay.appendChild(opt);
+  });
+
+  const selMonth = document.getElementById('sel-month');
+  months.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m;
+    opt.textContent = fmtMonth(m);
+    selMonth.appendChild(opt);
+  });
+
+  if (dates.length) {
+    document.getElementById('date-from').value = dates[0];
+    document.getElementById('date-to').value = dates[dates.length - 1];
+  }
+  render();
+}
+
+function fmtDate(d) {
+  const [y,m,day] = d.split('-');
+  return `${day}/${m}/${y}`;
+}
+function fmtMonth(m) {
+  const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const [y, mi] = m.split('-');
+  return `${months[parseInt(mi)-1]} ${y}`;
+}
+
+// ─── FILTERS ─────────────────────────────────────────────────────────────────
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => { if(b.textContent.toLowerCase().includes(m === 'day' ? 'dia' : m === 'month' ? 'mês' : 'per')) b.classList.add('active'); });
+  document.getElementById('fg-day').style.display = m === 'day' ? '' : 'none';
+  document.getElementById('fg-month').style.display = m === 'month' ? '' : 'none';
+  document.getElementById('fg-period').style.display = m === 'period' ? '' : 'none';
+  render();
+}
+
+function getFilteredDates() {
+  const all = [...new Set(rawData.map(r => r[0]))].sort();
+  if (mode === 'day') {
+    const v = document.getElementById('sel-day').value;
+    return v === 'all' ? all : [v];
+  }
+  if (mode === 'month') {
+    const v = document.getElementById('sel-month').value;
+    return v === 'all' ? all : all.filter(d => d.startsWith(v));
+  }
+  if (mode === 'period') {
+    const from = document.getElementById('date-from').value;
+    const to = document.getElementById('date-to').value;
+    return all.filter(d => (!from || d >= from) && (!to || d <= to));
+  }
+  return all;
+}
+
+function filterSearch(val) {
+  searchTerm = val.toLowerCase();
+  render();
+}
+
+// ─── ROWS ────────────────────────────────────────────────────────────────────
+// Dia único  → 1 linha por produto: variação = final − início daquele dia
+// Múltiplos  → 1 linha por produto consolidada:
+//              variação = SOMA das variações diárias (Σ final_dia − início_dia)
+//              início   = início do 1º dia (referência)
+//              final    = final do último dia (referência)
+//              vendidos = soma de todos os dias
+function getTableRows(dates) {
+  if (dates.length === 1) {
+    return rawData
+      .filter(r => r[0] === dates[0])
+      .map(r => ({
+        produto:      r[1],
+        rawDate:      r[0],
+        dataLabel:    fmtDate(r[0]),
+        inicio:       r[2],
+        final:        r[3],
+        variacaoFixa: null,                   // calculada no render via final-inicio
+        vendidosKeys: [`${r[0]}|${r[1]}`],
+      }));
+  }
+
+  // Período: consolida por produto somando as variações de cada dia
+  const firstDate = dates[0];
+  const lastDate  = dates[dates.length - 1];
+  const produtos  = [...new Set(rawData.map(r => r[1]))];
+
+  return produtos.map(p => {
+    const daysWithData = dates
+      .map(d => rawData.find(r => r[0] === d && r[1] === p))
+      .filter(Boolean);
+
+    if (daysWithData.length === 0) return null;
+
+    // Variação do período = soma das variações individuais de cada dia
+    const variacaoPeriodo = daysWithData.reduce((sum, row) => sum + (row[3] - row[2]), 0);
+
+    const firstRow = rawData.find(r => r[0] === firstDate && r[1] === p);
+    const lastRow  = rawData.find(r => r[0] === lastDate  && r[1] === p);
+
+    return {
+      produto:      p,
+      rawDate:      firstDate,
+      dataLabel:    `${fmtDate(firstDate)} → ${fmtDate(lastDate)}`,
+      inicio:       firstRow ? firstRow[2] : 0,
+      final:        lastRow  ? lastRow[3]  : 0,
+      variacaoFixa: variacaoPeriodo,           // pré-calculada, não recalcular no render
+      vendidosKeys: dates.map(d => `${d}|${p}`),
+    };
+  }).filter(Boolean);
+}
+
+// ─── RENDER ──────────────────────────────────────────────────────────────────
+function render() {
+  const dates    = getFilteredDates();
+  const multiDay = dates.length > 1;
+
+  let rows = getTableRows(dates);
+
+  // Search filter
+  if (searchTerm) {
+    rows = rows.filter(r => r.produto.toLowerCase().includes(searchTerm));
+  }
+
+  // Compute derived fields
+  rows = rows.map(r => {
+    // Dia único: variacao = final - inicio | Período: usa soma pré-calculada
+    const variacao = r.variacaoFixa !== null ? r.variacaoFixa : (r.final ?? 0) - (r.inicio ?? 0);
+    const vend = r.vendidosKeys.reduce((s, k) => s + (parseInt(vendidos[k]) || 0), 0);
+    const diferenca = vend - Math.abs(variacao < 0 ? variacao : 0);
+    return { ...r, variacao, vend, diferenca };
+  });
+
+  // Sort
+  if (sortCol) {
+    rows.sort((a, b) => {
+      const av = a[sortCol], bv = b[sortCol];
+      if (typeof av === 'string') return av.localeCompare(bv) * sortDir;
+      return ((av ?? 0) - (bv ?? 0)) * sortDir;
+    });
+  }
+
+  // ── Summary: calculado somando exatamente as linhas da tabela ──
+  const validRows = rows.filter(r => r.inicio > 0 || r.final > 0);
+  document.getElementById('s-items').textContent   = validRows.length;
+  document.getElementById('s-inicio').textContent  = validRows.reduce((s, r) => s + (r.inicio || 0), 0).toLocaleString('pt-BR');
+  document.getElementById('s-final').textContent   = validRows.reduce((s, r) => s + (r.final  || 0), 0).toLocaleString('pt-BR');
+  const totalVar = validRows.reduce((s, r) => s + r.variacao, 0);
+  document.getElementById('s-variacao').textContent = (totalVar > 0 ? '+' : '') + totalVar.toLocaleString('pt-BR');
+  document.getElementById('s-vendidos').textContent = validRows.reduce((s, r) => s + r.vend, 0).toLocaleString('pt-BR');
+
+  // Title
+  document.getElementById('table-title').innerHTML = dates.length === 1
+    ? `Estoque <span class="day-badge">${fmtDate(dates[0])}</span>`
+    : `Estoque — ${dates.length} dias <span class="day-badge">${fmtDate(dates[0])} → ${fmtDate(dates[dates.length-1])}</span>`;
+
+  // Table
+  const tbody = document.getElementById('table-body');
+  tbody.innerHTML = '';
+
+  if (rows.length === 0) {
+    document.getElementById('main-table').style.display = 'none';
+    document.getElementById('empty-state').style.display = '';
+    return;
+  }
+  document.getElementById('main-table').style.display = '';
+  document.getElementById('empty-state').style.display = 'none';
+
+  rows.forEach(r => {
+    if (r.inicio === 0 && r.final === 0) return;
+
+    const tr = document.createElement('tr');
+    const varClass = r.variacao < 0 ? 'negative' : r.variacao > 0 ? 'positive' : 'zero';
+    const difClass = r.diferenca < 0 ? 'warning'  : r.diferenca > 0 ? 'positive' : 'zero';
+    const varSign  = r.variacao  > 0 ? '+' : '';
+    const difSign  = r.diferenca > 0 ? '+' : '';
+
+    // No período, a coluna Data mostra o range; no dia único mostra o badge do dia
+    const dataCell = `<td style="text-align:center;font-size:${multiDay ? '0.75' : '0.82'}rem;color:#888;">${r.dataLabel}</td>`;
+
+    // Chave de edição: no período usa todas as chaves para exibir a soma, mas grava na chave do último dia
+    const editKey  = r.vendidosKeys[r.vendidosKeys.length - 1];
+    const allKeys  = r.vendidosKeys.join(',');
+    const vendCell = `<td class="num editable" onclick="editVendidos(this,'${editKey}','${allKeys}')" title="Clique para editar">${r.vend > 0 ? r.vend : '<span class="no-data">clique p/ editar</span>'}</td>`;
+
+    tr.innerHTML = `
+      <td class="product">${r.produto}</td>
+      ${dataCell}
+      <td class="num">${r.inicio > 0 ? r.inicio : '<span class="no-data">—</span>'}</td>
+      <td class="num">${r.final  > 0 ? r.final  : '<span class="no-data">—</span>'}</td>
+      <td class="num ${varClass}">${varSign}${r.variacao}</td>
+      ${vendCell}
+      <td class="num ${difClass}">${r.vend > 0 || r.variacao !== 0 ? difSign + r.diferenca : '—'}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// ─── INLINE EDIT ─────────────────────────────────────────────────────────────
+// editKey  = chave do campo que será gravado (último dia em período múltiplo)
+// allKeys  = todas as chaves do período para calcular o total atual
+function editVendidos(td, editKey, allKeysStr) {
+  if (td.querySelector('input')) return;
+  const allKeys = allKeysStr ? allKeysStr.split(',') : [editKey];
+  // Mostra o total atual do período no campo
+  const cur = allKeys.reduce((s, k) => s + (parseInt(vendidos[k]) || 0), 0);
+  td.innerHTML = `<input class="inline-edit" type="number" min="0" value="${cur || ''}" autofocus>`;
+  const inp = td.querySelector('input');
+  inp.focus();
+  inp.select();
+  inp.addEventListener('blur', () => saveVendidos(editKey, inp.value));
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter') inp.blur();
+    if (e.key === 'Escape') { render(); }
+  });
+}
+
+function saveVendidos(key, val) {
+  const n = parseInt(val);
+  if (!isNaN(n) && n >= 0) {
+    vendidos[key] = n;
+  } else {
+    delete vendidos[key];
+  }
+  localStorage.setItem('vendidos', JSON.stringify(vendidos));
+  render();
+}
+
+// ─── SORT ────────────────────────────────────────────────────────────────────
+function sortBy(col) {
+  if (sortCol === col) { sortDir *= -1; } else { sortCol = col; sortDir = 1; }
+  updateSortUI();
+  render();
+}
+
+function toggleSortVendas() {
+  if (sortCol === 'vend') {
+    sortDir *= -1;
+  } else {
+    sortCol = 'vend';
+    sortDir = -1; // começa decrescente (mais vendidos primeiro)
+  }
+  updateSortUI();
+  render();
+}
+
+function updateSortUI() {
+  // Reset todos os headers
+  document.querySelectorAll('thead th').forEach(th => {
+    th.classList.remove('col-sorted-asc', 'col-sorted-desc');
+    const icon = th.querySelector('.sort-icon');
+    if (icon) icon.textContent = '↕';
+  });
+
+  // Destaca a coluna ativa
+  if (sortCol) {
+    const headers = document.querySelectorAll('thead th');
+    const colMap = ['produto', 'rawDate', 'inicio', 'final', 'variacao', 'vend', 'diferenca'];
+    headers.forEach((th, i) => {
+      if (colMap[i] === sortCol) {
+        th.classList.add(sortDir === 1 ? 'col-sorted-asc' : 'col-sorted-desc');
+        const icon = th.querySelector('.sort-icon');
+        if (icon) icon.textContent = sortDir === 1 ? '▲' : '▼';
+      }
+    });
+  }
+
+  // Atualiza botão dedicado de vendas
+  const btn = document.getElementById('btn-sort-vendas');
+  const ico = document.getElementById('sort-vendas-icon');
+  if (sortCol === 'vend') {
+    btn.className = sortDir === -1 ? 'btn-sort-vendas active-desc' : 'btn-sort-vendas active-asc';
+    ico.textContent = sortDir === -1 ? '▼' : '▲';
+    btn.childNodes[0].textContent = sortDir === -1 ? '🛒 Mais vendidos ' : '🛒 Menos vendidos ';
+  } else {
+    btn.className = 'btn-sort-vendas';
+    ico.textContent = '↕';
+    btn.childNodes[0].textContent = '🛒 Mais vendidos ';
+  }
+}
+
+// ─── EXPORT ──────────────────────────────────────────────────────────────────
+function exportCSV() {
+  const dates = getFilteredDates();
+  let rows = getTableRows(dates);
+  rows = rows.map(r => {
+    const inicio = r.inicio ?? 0;
+    const final = r.final ?? 0;
+    const variacao = final - inicio;
+    const vend = r.multiDay ? (r.vendidosOverride || 0) : (parseInt(vendidos[r.vendidosKey]) || 0);
+    const diferenca = vend - Math.abs(variacao < 0 ? variacao : 0);
+    return { ...r, variacao, vend, diferenca };
+  }).filter(r => r.inicio !== null || r.final !== null);
+
+  let csv = 'Produto,Data,Inicio,Final,Variacao Estoque,Itens Vendidos,Diferenca\n';
+  rows.forEach(r => {
+    csv += `"${r.produto}","${r.data}",${r.inicio ?? ''},${r.final ?? ''},${r.variacao},${r.vend},${r.diferenca}\n`;
+  });
+
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'estoque_export.csv';
+  a.click();
+}
+
+init();
+</script>
+</body>
+</html>
