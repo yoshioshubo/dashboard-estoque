@@ -64,6 +64,9 @@
   thead th { background: var(--surface); color: var(--muted); font-size: 11px; text-transform: uppercase;
               letter-spacing: .5px; padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border);
               cursor: pointer; user-select: none; white-space: nowrap; }
+  thead th:nth-child(2), thead th:nth-child(3), thead th:nth-child(4),
+  thead th:nth-child(5), thead th:nth-child(6) { text-align: right; width: 110px; }
+  thead th:nth-child(7) { width: 180px; }
   thead th:hover { color: var(--text); }
   thead th .sort-icon { margin-left: 4px; opacity: .4; }
   thead th.sorted .sort-icon { opacity: 1; color: var(--accent); }
@@ -71,8 +74,8 @@
   tbody tr:last-child { border-bottom: none; }
   tbody tr:hover { background: rgba(108,99,255,.08); }
   td { padding: 10px 14px; }
-  td.produto { font-weight: 500; }
-  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  td.produto { font-weight: 500; min-width: 200px; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; letter-spacing: 0; width: 110px; }
   td.neg { color: var(--red); }
   td.pos { color: var(--green); }
   td.zero{ color: var(--muted); }
@@ -1478,7 +1481,7 @@ function renderTabela() {
       <td class="produto">${l.produto}</td>
       <td class="num">${l.inicial}</td>
       <td class="num">${l.final}</td>
-      <td class="num ${varCls}">${l.variacao < 0 ? '' : '+'}"${l.variacao}</td>
+      <td class="num ${varCls}">${l.variacao < 0 ? '' : '+'}${l.variacao}</td>
       <td class="num">${l.semMapa ? '<span style="color:var(--muted)">—</span>' : l.vendas}</td>
       <td class="num ${difCls}">${l.semMapa ? '<span style="color:var(--muted)">—</span>' : difSign + l.diferenca}</td>
       <td>${badge}</td>
