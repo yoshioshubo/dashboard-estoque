@@ -3,1789 +3,1212 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cultural Dashboard — Controle de Estoque</title>
+<title>Dashboard de Estoque</title>
 <style>
-  :root {
-    --bg:       #0f1117;
-    --surface:  #1a1d2e;
-    --border:   #2a2d3e;
-    --accent:   #6c63ff;
-    --green:    #22c55e;
-    --red:      #ef4444;
-    --yellow:   #f59e0b;
-    --text:     #e2e8f0;
-    --muted:    #94a3b8;
-    --radius:   8px;
-  }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; font-size: 14px; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #333; }
 
-  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 24px;
-            display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-  header h1 { font-size: 18px; font-weight: 700; color: #fff; }
-  .badge { background: var(--accent); color: #fff; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-  .btn { padding: 7px 14px; border-radius: var(--radius); border: 1px solid var(--border);
-          background: var(--surface); color: var(--text); cursor: pointer; font-size: 13px; transition: all .2s; }
-  .btn:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
-  .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-  .btn-danger  { background: var(--red);    border-color: var(--red);    color: #fff; }
-  .btn-sm { padding: 4px 10px; font-size: 12px; }
-  .ml-auto { margin-left: auto; }
+  header {
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    color: white;
+    padding: 20px 30px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+  header h1 { font-size: 1.5rem; font-weight: 600; }
+  header span { font-size: 0.85rem; opacity: 0.7; }
 
-  nav { display: flex; gap: 2px; background: var(--surface); padding: 8px 24px; border-bottom: 1px solid var(--border); }
-  .tab-btn { padding: 8px 18px; border-radius: var(--radius); border: none; background: none;
-              color: var(--muted); cursor: pointer; font-size: 14px; font-weight: 500; transition: all .2s; }
-  .tab-btn.active { background: var(--accent); color: #fff; }
-  .tab-btn:hover:not(.active) { color: var(--text); background: var(--border); }
+  .filters {
+    background: white;
+    padding: 16px 30px;
+    display: flex;
+    gap: 24px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    border-bottom: 1px solid #e0e0e0;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .filter-group { display: flex; flex-direction: column; gap: 4px; }
+  .filter-group label { font-size: 0.75rem; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
+  .filter-group select, .filter-group input {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    background: white;
+    color: #333;
+    cursor: pointer;
+    min-width: 140px;
+  }
+  .filter-group select:focus, .filter-group input:focus {
+    outline: none;
+    border-color: #4a90e2;
+    box-shadow: 0 0 0 3px rgba(74,144,226,0.15);
+  }
+  .filter-tabs { display: flex; gap: 6px; }
+  .tab-btn {
+    padding: 8px 16px;
+    border: 1px solid #ddd;
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+  }
+  .tab-btn.active {
+    background: #4a90e2;
+    color: white;
+    border-color: #4a90e2;
+  }
+  .tab-btn:hover:not(.active) { background: #f5f5f5; }
 
-  .tab-content { display: none; padding: 20px 24px; }
-  .tab-content.active { display: block; }
+  .period-inputs { display: flex; gap: 8px; align-items: flex-end; }
 
-  /* CARDS */
-  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 20px; }
-  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
-  .card-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
-  .card-value { font-size: 24px; font-weight: 700; }
-  .card-value.green { color: var(--green); }
-  .card-value.red   { color: var(--red); }
-  .card-value.yellow{ color: var(--yellow); }
+  .summary-cards {
+    display: flex;
+    gap: 16px;
+    padding: 20px 30px;
+    flex-wrap: wrap;
+  }
+  .card {
+    background: white;
+    border-radius: 10px;
+    padding: 16px 20px;
+    flex: 1;
+    min-width: 160px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+    border-left: 4px solid #ccc;
+  }
+  .card.blue { border-color: #4a90e2; }
+  .card.green { border-color: #27ae60; }
+  .card.orange { border-color: #e67e22; }
+  .card.red { border-color: #e74c3c; }
+  .card.purple { border-color: #9b59b6; }
+  .card-label { font-size: 0.72rem; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .card-value { font-size: 1.6rem; font-weight: 700; }
+  .card.blue .card-value { color: #4a90e2; }
+  .card.green .card-value { color: #27ae60; }
+  .card.orange .card-value { color: #e67e22; }
+  .card.red .card-value { color: #e74c3c; }
+  .card.purple .card-value { color: #9b59b6; }
 
-  /* TOOLBAR */
-  .toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
-  .toolbar input[type=text] { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-                               color: var(--text); padding: 7px 12px; font-size: 13px; width: 220px; }
-  .toolbar input[type=text]:focus { outline: none; border-color: var(--accent); }
-  select { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-            color: var(--text); padding: 7px 10px; font-size: 13px; cursor: pointer; }
+  .table-container {
+    padding: 0 30px 30px;
+    overflow-x: auto;
+  }
+  .table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .table-header h2 { font-size: 1rem; color: #555; }
+  .search-box {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    width: 220px;
+  }
+  .search-box:focus { outline: none; border-color: #4a90e2; box-shadow: 0 0 0 3px rgba(74,144,226,0.15); }
 
-  /* TABLE */
-  .table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); }
-  table { width: 100%; border-collapse: collapse; }
-  thead th { background: var(--surface); color: var(--muted); font-size: 11px; text-transform: uppercase;
-              letter-spacing: .5px; padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border);
-              cursor: pointer; user-select: none; white-space: nowrap; }
-  thead th:nth-child(2), thead th:nth-child(3), thead th:nth-child(4),
-  thead th:nth-child(5), thead th:nth-child(6) { text-align: right; width: 110px; }
-  thead th:nth-child(7) { width: 180px; }
-  thead th:hover { color: var(--text); }
-  thead th .sort-icon { margin-left: 4px; opacity: .4; }
-  thead th.sorted .sort-icon { opacity: 1; color: var(--accent); }
-  tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
-  tbody tr:last-child { border-bottom: none; }
-  tbody tr:hover { background: rgba(108,99,255,.08); }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+    font-size: 0.88rem;
+  }
+  thead tr { background: #1a1a2e; color: white; }
+  thead th {
+    padding: 13px 14px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+  }
+  thead th:hover { background: #2c2c4e; }
+  thead th .sort-icon { margin-left: 4px; opacity: 0.5; font-size: 0.7rem; }
+  thead th.sorted .sort-icon { opacity: 1; }
+
+  tbody tr { border-bottom: 1px solid #f0f0f0; transition: background 0.1s; }
+  tbody tr:hover { background: #f7f9fc; }
+  tbody tr.category-header { background: #f0f2f5; }
+  tbody tr.category-header td {
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 8px 14px;
+  }
+
   td { padding: 10px 14px; }
-  td.produto { font-weight: 500; min-width: 200px; }
-  td.num { text-align: right; font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; letter-spacing: 0; width: 110px; }
-  td.neg { color: var(--red); }
-  td.pos { color: var(--green); }
-  td.zero{ color: var(--muted); }
+  td.product { font-weight: 500; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  td.negative { color: #e74c3c; font-weight: 600; }
+  td.positive { color: #27ae60; font-weight: 600; }
+  td.zero { color: #aaa; }
+  td.warning { color: #e67e22; font-weight: 600; }
+  td.editable {
+    cursor: pointer;
+    background: #fffbf0;
+  }
+  td.editable:hover { background: #fff3cd; }
+  td input.inline-edit {
+    width: 80px;
+    padding: 4px 8px;
+    border: 2px solid #4a90e2;
+    border-radius: 4px;
+    text-align: right;
+    font-size: 0.88rem;
+    font-family: inherit;
+  }
 
-  .badge-alert { display: inline-block; background: rgba(239,68,68,.15); color: var(--red);
-                  border: 1px solid var(--red); border-radius: 20px; padding: 1px 8px; font-size: 11px; }
-  .badge-ok    { display: inline-block; background: rgba(34,197,94,.1);  color: var(--green);
-                  border: 1px solid var(--green); border-radius: 20px; padding: 1px 8px; font-size: 11px; }
-  .badge-warn  { display: inline-block; background: rgba(245,158,11,.12); color: var(--yellow);
-                  border: 1px solid var(--yellow); border-radius: 20px; padding: 1px 8px; font-size: 11px; }
-  .badge-sem   { display: inline-block; background: rgba(148,163,184,.08); color: var(--muted);
-                  border: 1px solid var(--muted); border-radius: 20px; padding: 1px 8px; font-size: 11px; }
+  .day-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    background: #e8f0fe;
+    color: #4a90e2;
+    margin-left: 6px;
+  }
 
-  /* AUDIT */
-  .audit-block { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-                  padding: 18px 20px; margin-bottom: 18px; }
-  .audit-block h3 { font-size: 14px; font-weight: 600; margin-bottom: 10px; }
-  .audit-block p  { color: var(--muted); line-height: 1.6; font-size: 13px; margin-bottom: 6px; }
-  .audit-block.alert-block { border-left: 3px solid var(--red); }
-  .audit-block.warn-block  { border-left: 3px solid var(--yellow); }
-  .audit-block.info-block  { border-left: 3px solid var(--accent); }
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #aaa;
+  }
+  .empty-state p { font-size: 1rem; margin-top: 8px; }
 
-  /* MAPEAMENTO */
-  .map-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
-  .map-row:last-child { border-bottom: none; }
-  .map-produto { width: 220px; font-size: 13px; flex-shrink: 0; }
-  .map-vendas { flex: 1; }
-  .tag-list { display: flex; flex-wrap: wrap; gap: 6px; }
-  .tag { background: rgba(108,99,255,.15); border: 1px solid var(--accent); color: var(--accent);
-          border-radius: 20px; padding: 2px 10px; font-size: 12px; display: flex; align-items: center; gap: 5px; cursor: default; }
-  .tag .rm { cursor: pointer; opacity: .6; }
-  .tag .rm:hover { opacity: 1; color: var(--red); }
-  .tag-input { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-                color: var(--text); padding: 4px 8px; font-size: 12px; width: 200px; }
+  .multi-day-note {
+    background: #e8f4fd;
+    border: 1px solid #b8d8f0;
+    border-radius: 6px;
+    padding: 10px 16px;
+    font-size: 0.82rem;
+    color: #2980b9;
+    margin: 0 30px 16px;
+  }
 
-  /* IMPORT */
-  .import-area { background: var(--surface); border: 2px dashed var(--border); border-radius: var(--radius);
-                  padding: 32px; text-align: center; cursor: pointer; transition: all .2s; }
-  .import-area:hover { border-color: var(--accent); }
-  .import-area p { color: var(--muted); margin-top: 8px; font-size: 13px; }
+  .no-data { color: #ccc; font-style: italic; }
 
-  .periodos-list { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
-  .periodo-chip { background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
-                   padding: 6px 14px; font-size: 13px; display: flex; align-items: center; gap: 8px; }
-  .periodo-chip.active-chip { border-color: var(--accent); color: var(--accent); }
+  .btn-export {
+    padding: 8px 16px;
+    background: #27ae60;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: background 0.2s;
+  }
+  .btn-export:hover { background: #219a52; }
 
-  .separator { height: 1px; background: var(--border); margin: 20px 0; }
-  h2 { font-size: 16px; font-weight: 600; margin-bottom: 14px; }
-  .no-data { color: var(--muted); text-align: center; padding: 40px; font-size: 13px; }
+  .btn-sort-vendas {
+    padding: 8px 16px;
+    background: white;
+    color: #9b59b6;
+    border: 2px solid #9b59b6;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 700;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-sort-vendas:hover { background: #9b59b6; color: white; }
+  .btn-sort-vendas.active-asc  { background: #9b59b6; color: white; }
+  .btn-sort-vendas.active-desc { background: #6c3483; color: white; border-color: #6c3483; }
 
-  /* TOAST */
-  #toast { position: fixed; bottom: 24px; right: 24px; background: var(--green); color: #fff;
-            padding: 10px 18px; border-radius: var(--radius); font-size: 13px; font-weight: 500;
-            opacity: 0; pointer-events: none; transition: opacity .3s; z-index: 9999; }
-  #toast.show { opacity: 1; }
+  thead th.col-sorted-asc  { background: #2c2c4e; }
+  thead th.col-sorted-asc  .sort-icon::after  { content: ' ▲'; opacity: 1; }
+  thead th.col-sorted-desc { background: #2c2c4e; }
+  thead th.col-sorted-desc .sort-icon::after { content: ' ▼'; opacity: 1; }
+
+  /* ── Abas principais ── */
+  .main-tabs {
+    display: flex;
+    gap: 0;
+    background: #1a1a2e;
+    padding: 0 30px;
+  }
+  .main-tab {
+    padding: 12px 24px;
+    color: rgba(255,255,255,0.55);
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+  }
+  .main-tab:hover { color: rgba(255,255,255,0.85); }
+  .main-tab.active { color: white; border-bottom-color: #4a90e2; }
+
+  /* ── Auditoria ── */
+  .audit-container { padding: 24px 30px; }
+  .audit-section { margin-bottom: 28px; }
+  .audit-section-title {
+    font-size: 0.78rem; font-weight: 700; color: #555;
+    text-transform: uppercase; letter-spacing: 0.6px;
+    margin-bottom: 12px; padding-bottom: 8px;
+    border-bottom: 2px solid #e8e8e8;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .audit-cards { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 20px; }
+  .audit-card {
+    background: white; border-radius: 10px; padding: 16px 20px;
+    flex: 1; min-width: 140px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+  }
+  .audit-card.red   { border-left: 4px solid #e74c3c; }
+  .audit-card.amber { border-left: 4px solid #e67e22; }
+  .audit-card.blue  { border-left: 4px solid #4a90e2; }
+  .audit-card.green { border-left: 4px solid #27ae60; }
+  .audit-card-label { font-size: 0.72rem; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .audit-card-value { font-size: 1.5rem; font-weight: 700; }
+  .audit-card.red   .audit-card-value { color: #e74c3c; }
+  .audit-card.amber .audit-card-value { color: #e67e22; }
+  .audit-card.blue  .audit-card-value { color: #4a90e2; }
+  .audit-card.green .audit-card-value { color: #27ae60; }
+
+  .audit-table {
+    width: 100%; border-collapse: collapse;
+    background: white; border-radius: 10px; overflow: hidden;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+    font-size: 0.85rem; margin-bottom: 6px;
+  }
+  .audit-table thead tr { background: #1a1a2e; color: white; }
+  .audit-table thead th { padding: 11px 13px; text-align: left; font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.4px; white-space: nowrap; }
+  .audit-table th.num, .audit-table td.num { text-align: right; }
+  .audit-table tbody tr { border-bottom: 1px solid #f0f0f0; }
+  .audit-table tbody tr:hover { background: #f7f9fc; }
+  .audit-table tbody tr.row-danger { background: #fff5f5; }
+  .audit-table tbody tr.row-warn   { background: #fffbf0; }
+  .audit-table td { padding: 10px 13px; }
+  .badge { display: inline-block; padding: 3px 9px; border-radius: 10px; font-size: 0.72rem; font-weight: 700; }
+  .badge-danger { background: #fde8e8; color: #c0392b; }
+  .badge-warn   { background: #fef3cd; color: #d68910; }
+  .badge-info   { background: #e8f4fd; color: #2980b9; }
+  .badge-ok     { background: #e8f8f0; color: #1e8449; }
+  .diff-neg { color: #e74c3c; font-weight: 700; }
+  .diff-pos { color: #e67e22; font-weight: 700; }
+  .diff-ok  { color: #27ae60; font-weight: 700; }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>Cultural Dashboard</h1>
-  <span class="badge" id="periodo-badge">Carregando...</span>
-  <div class="ml-auto" style="display:flex;gap:8px;">
-    <button class="btn btn-sm" onclick="document.getElementById('import-file').click()">+ Importar Período</button>
-    <input type="file" id="import-file" accept=".json" style="display:none" onchange="importarPeriodo(event)">
-    <button class="btn btn-sm" onclick="exportarCSV()">Exportar CSV</button>
+  <div>
+    <h1>📦 Dashboard de Controle de Estoque</h1>
+    <span>Contagem diária · Clique em "Itens Vendidos" para editar</span>
   </div>
 </header>
 
-<nav>
-  <button class="tab-btn active" onclick="showTab('estoque')">📊 Estoque</button>
-  <button class="tab-btn"        onclick="showTab('auditoria')">🔍 Auditoria</button>
-  <button class="tab-btn"        onclick="showTab('mapeamento')">🔗 Mapeamento</button>
-  <button class="tab-btn"        onclick="showTab('periodos')">📁 Períodos</button>
-</nav>
+<div class="main-tabs">
+  <button class="main-tab active" onclick="showTab('estoque')">📊 Estoque</button>
+  <button class="main-tab" onclick="showTab('auditoria')">🔍 Auditoria</button>
+</div>
 
-<!-- ===================== TAB ESTOQUE ===================== -->
-<div id="tab-estoque" class="tab-content active">
-  <div class="cards" id="cards"></div>
-  <div class="toolbar">
-    <input type="text" id="filtro-busca" placeholder="Buscar produto..." oninput="renderTabela()">
-    <select id="filtro-status" onchange="renderTabela()">
-      <option value="todos">Todos os produtos</option>
-      <option value="alerta">Apenas alertas</option>
-      <option value="sem-mapa">Sem mapeamento</option>
+<div id="tab-estoque">
+<div class="filters">
+  <div class="filter-group">
+    <label>Modo de filtro</label>
+    <div class="filter-tabs">
+      <button class="tab-btn active" onclick="setMode('day')">Por Dia</button>
+      <button class="tab-btn" onclick="setMode('month')">Por Mês</button>
+      <button class="tab-btn" onclick="setMode('period')">Período</button>
+    </div>
+  </div>
+
+  <div class="filter-group" id="fg-day">
+    <label>Dia</label>
+    <select id="sel-day" onchange="render()">
+      <option value="all">Todos os dias</option>
     </select>
-    <select id="periodo-select" onchange="trocarPeriodo()"></select>
   </div>
-  <div class="table-wrap">
-    <table id="tabela-estoque">
-      <thead>
-        <tr>
-          <th onclick="sortBy('produto')">Produto <span class="sort-icon">↕</span></th>
-          <th onclick="sortBy('inicial')" class="num">Inicial <span class="sort-icon">↕</span></th>
-          <th onclick="sortBy('final')" class="num">Final <span class="sort-icon">↕</span></th>
-          <th onclick="sortBy('variacao')" class="num">Variação <span class="sort-icon">↕</span></th>
-          <th onclick="sortBy('vendas')" class="num">Vendas Reg. <span class="sort-icon">↕</span></th>
-          <th onclick="sortBy('diferenca')" class="num">Diferença <span class="sort-icon">↕</span></th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody id="tbody-estoque"></tbody>
-    </table>
+
+  <div class="filter-group" id="fg-month" style="display:none">
+    <label>Mês</label>
+    <select id="sel-month" onchange="render()">
+      <option value="all">Todos os meses</option>
+    </select>
   </div>
-  <div id="tabela-footer" style="color:var(--muted);font-size:12px;margin-top:10px;"></div>
-</div>
 
-<!-- ===================== TAB AUDITORIA ===================== -->
-<div id="tab-auditoria" class="tab-content">
-  <div id="audit-cards" class="cards"></div>
-  <div id="audit-content"></div>
-</div>
+  <div class="filter-group" id="fg-period" style="display:none">
+    <label>De</label>
+    <div class="period-inputs">
+      <input type="date" id="date-from" onchange="render()">
+      <span style="padding-bottom:9px;color:#999">até</span>
+      <input type="date" id="date-to" onchange="render()">
+    </div>
+  </div>
 
-<!-- ===================== TAB MAPEAMENTO ===================== -->
-<div id="tab-mapeamento" class="tab-content">
-  <h2>Mapeamento Produto Estoque → Produto Vendas</h2>
-  <p style="color:var(--muted);font-size:13px;margin-bottom:16px;">
-    Defina quais itens do relatório de vendas correspondem a cada produto do estoque.
-    Clique em ✕ para remover. Digite e pressione Enter para adicionar.
-  </p>
-  <div id="map-list"></div>
-  <div style="margin-top:16px;display:flex;gap:10px;">
-    <button class="btn btn-primary" onclick="salvarMapeamento()">Salvar Mapeamento</button>
-    <button class="btn" onclick="resetarMapeamento()">Restaurar Padrão</button>
+  <div class="filter-group">
+    <label>Ordenar por vendas</label>
+    <button class="btn-sort-vendas" id="btn-sort-vendas" onclick="toggleSortVendas()">
+      🛒 Mais vendidos <span id="sort-vendas-icon">↕</span>
+    </button>
+  </div>
+
+  <div class="filter-group">
+    <label>&nbsp;</label>
+    <button class="btn-export" onclick="exportCSV()">⬇ Exportar CSV</button>
   </div>
 </div>
 
-<!-- ===================== TAB PERÍODOS ===================== -->
-<div id="tab-periodos" class="tab-content">
-  <h2>Importar Novo Período</h2>
-  <div class="import-area" onclick="document.getElementById('import-file2').click()">
-    <div style="font-size:32px;">📂</div>
-    <p>Clique para importar arquivo JSON gerado pelo parser</p>
-    <p style="font-size:11px;margin-top:4px;">Formato: cultural_data.json gerado pelo parser_cultural.py</p>
-    <input type="file" id="import-file2" accept=".json" style="display:none" onchange="importarPeriodo(event)">
-  </div>
-  <div class="separator"></div>
-  <h2>Períodos Armazenados</h2>
-  <div id="periodos-armazenados"></div>
+<div class="summary-cards">
+  <div class="card blue"><div class="card-label">Itens únicos</div><div class="card-value" id="s-items">—</div></div>
+  <div class="card green"><div class="card-label">Total Início</div><div class="card-value" id="s-inicio">—</div></div>
+  <div class="card orange"><div class="card-label">Total Final</div><div class="card-value" id="s-final">—</div></div>
+  <div class="card red"><div class="card-label">Variação Estoque</div><div class="card-value" id="s-variacao">—</div></div>
+  <div class="card purple"><div class="card-label">Itens Vendidos</div><div class="card-value" id="s-vendidos">—</div></div>
 </div>
 
-<div id="toast">Salvo!</div>
+<div id="multi-day-note" class="multi-day-note" style="display:none">
+  ℹ️ <strong>Múltiplos dias selecionados:</strong> Início = primeiro dia do período · Final = último dia do período · Itens Vendidos = soma do período
+</div>
+
+<div class="table-container">
+  <div class="table-header">
+    <h2 id="table-title">Estoque</h2>
+    <input class="search-box" type="text" placeholder="🔍 Buscar produto..." oninput="filterSearch(this.value)">
+  </div>
+  <table id="main-table">
+    <thead>
+      <tr>
+        <th onclick="sortBy('produto')">Produto <span class="sort-icon">↕</span></th>
+        <th onclick="sortBy('data')" style="text-align:center">Data <span class="sort-icon">↕</span></th>
+        <th onclick="sortBy('inicio')" style="text-align:right">Início <span class="sort-icon">↕</span></th>
+        <th onclick="sortBy('final')" style="text-align:right">Final <span class="sort-icon">↕</span></th>
+        <th onclick="sortBy('variacao')" style="text-align:right">Variação Estoque <span class="sort-icon">↕</span></th>
+        <th onclick="sortBy('vend')" style="text-align:right">Itens Vendidos <span class="sort-icon">↕</span></th>
+        <th onclick="sortBy('diferenca')" style="text-align:right">Diferença <span class="sort-icon">↕</span></th>
+      </tr>
+    </thead>
+    <tbody id="table-body"></tbody>
+  </table>
+  <div id="empty-state" class="empty-state" style="display:none">
+    <p>Nenhum dado encontrado para o filtro selecionado.</p>
+  </div>
+</div>
 
 <script>
-// ============================================================
-// DADOS INICIAIS (embutidos do parser)
-// ============================================================
-const ESTOQUE_INICIAL = [
-    {
-        "produto": "Amstel",
-        "inicial": 43,
-        "final": 66,
-        "variacao": 23
-    },
-    {
-        "produto": "Amstel Ultra",
-        "inicial": 0,
-        "final": 0,
-        "variacao": 0
-    },
-    {
-        "produto": "Heineken",
-        "inicial": 809,
-        "final": 643,
-        "variacao": -166
-    },
-    {
-        "produto": "Heineken Zero",
-        "inicial": 65,
-        "final": 54,
-        "variacao": -11
-    },
-    {
-        "produto": "Heineken s/ Glúten",
-        "inicial": 12,
-        "final": 0,
-        "variacao": -12
-    },
-    {
-        "produto": "Eisenbahn Pilsen",
-        "inicial": 1105,
-        "final": 702,
-        "variacao": -403
-    },
-    {
-        "produto": "Eisenbahn Ipa",
-        "inicial": 87,
-        "final": 51,
-        "variacao": -36
-    },
-    {
-        "produto": "Eisenbahn Pale Ale",
-        "inicial": 62,
-        "final": 37,
-        "variacao": -25
-    },
-    {
-        "produto": "Eisenbahn Session Ipa",
-        "inicial": 0,
-        "final": 0,
-        "variacao": 0
-    },
-    {
-        "produto": "Eisenbahn Unfiltered",
-        "inicial": 74,
-        "final": 6,
-        "variacao": -68
-    },
-    {
-        "produto": "Eisenbahn Weizenbier",
-        "inicial": 34,
-        "final": 29,
-        "variacao": -5
-    },
-    {
-        "produto": "Lgunitas Ipa",
-        "inicial": 7,
-        "final": 6,
-        "variacao": -1
-    },
-    {
-        "produto": "Sol",
-        "inicial": 228,
-        "final": 237,
-        "variacao": 9
-    },
-    {
-        "produto": "Sol Zero",
-        "inicial": 32,
-        "final": 36,
-        "variacao": 4
-    },
-    {
-        "produto": "Blue Moon",
-        "inicial": 24,
-        "final": 34,
-        "variacao": 10
-    },
-    {
-        "produto": "Praya Classica",
-        "inicial": 31,
-        "final": 15,
-        "variacao": -16
-    },
-    {
-        "produto": "Praya Lager",
-        "inicial": 0,
-        "final": 0,
-        "variacao": 0
-    },
-    {
-        "produto": "Água Crystal s/ gás",
-        "inicial": 435,
-        "final": 197,
-        "variacao": -238
-    },
-    {
-        "produto": "Água Crystal c/ gás",
-        "inicial": 199,
-        "final": 149,
-        "variacao": -50
-    },
-    {
-        "produto": "Água s/ gás Mamba",
-        "inicial": 0,
-        "final": 0,
-        "variacao": 0
-    },
-    {
-        "produto": "Água c/ gás Mamba",
-        "inicial": 84,
-        "final": 84,
-        "variacao": 0
-    },
-    {
-        "produto": "Coca Cola Lata",
-        "inicial": 40,
-        "final": 24,
-        "variacao": -16
-    },
-    {
-        "produto": "Coca Cola Lata Zero",
-        "inicial": 50,
-        "final": 28,
-        "variacao": -22
-    },
-    {
-        "produto": "Coca Cola Garrafa",
-        "inicial": 43,
-        "final": 17,
-        "variacao": -26
-    },
-    {
-        "produto": "Coca Cola Garrafa Zero",
-        "inicial": 49,
-        "final": 28,
-        "variacao": -21
-    },
-    {
-        "produto": "Fanta Guaraná",
-        "inicial": 15,
-        "final": 11,
-        "variacao": -4
-    },
-    {
-        "produto": "Fanta Guaraná Zero",
-        "inicial": 29,
-        "final": 27,
-        "variacao": -2
-    },
-    {
-        "produto": "Fanta Uva",
-        "inicial": 0,
-        "final": 0,
-        "variacao": 0
-    },
-    {
-        "produto": "Fanta Laranja",
-        "inicial": 13,
-        "final": 11,
-        "variacao": -2
-    },
-    {
-        "produto": "Sprite",
-        "inicial": 10,
-        "final": 7,
-        "variacao": -3
-    },
-    {
-        "produto": "Sprite Zero",
-        "inicial": 68,
-        "final": 37,
-        "variacao": -31
-    },
-    {
-        "produto": "Schweppes Citrus",
-        "inicial": 14,
-        "final": 12,
-        "variacao": -2
-    },
-    {
-        "produto": "Schweppes Tônica",
-        "inicial": 49,
-        "final": 34,
-        "variacao": -15
-    },
-    {
-        "produto": "Schweppes Ginger Ale",
-        "inicial": 10,
-        "final": 10,
-        "variacao": 0
-    },
-    {
-        "produto": "Del Valle Goiaba Zero",
-        "inicial": 21,
-        "final": 21,
-        "variacao": 0
-    },
-    {
-        "produto": "Del Valle Manga",
-        "inicial": 18,
-        "final": 13,
-        "variacao": -5
-    },
-    {
-        "produto": "Del Valle Maracujá",
-        "inicial": 16,
-        "final": 16,
-        "variacao": 0
-    },
-    {
-        "produto": "Del Valle Pêssego",
-        "inicial": 20,
-        "final": 19,
-        "variacao": -1
-    },
-    {
-        "produto": "Del Valle Uva",
-        "inicial": 22,
-        "final": 21,
-        "variacao": -1
-    },
-    {
-        "produto": "Del Valle Tropical",
-        "inicial": 6,
-        "final": 5,
-        "variacao": -1
-    },
-    {
-        "produto": "Del Valle Clássica",
-        "inicial": 2,
-        "final": 6,
-        "variacao": 4
-    },
-    {
-        "produto": "Monster Energy Tradicional",
-        "inicial": 23,
-        "final": 9,
-        "variacao": -14
-    },
-    {
-        "produto": "Monster Energy Zero",
-        "inicial": 30,
-        "final": 10,
-        "variacao": -20
-    },
-    {
-        "produto": "Monster Ultra",
-        "inicial": 36,
-        "final": 10,
-        "variacao": -26
-    },
-    {
-        "produto": "Monster Ultra Fiesta",
-        "inicial": 21,
-        "final": 17,
-        "variacao": -4
-    },
-    {
-        "produto": "Monster Mango Loco",
-        "inicial": 27,
-        "final": 10,
-        "variacao": -17
-    },
-    {
-        "produto": "Monster Pipeline",
-        "inicial": 6,
-        "final": 1,
-        "variacao": -5
-    },
-    {
-        "produto": "Monster Watermalon",
-        "inicial": 33,
-        "final": 14,
-        "variacao": -19
-    },
-    {
-        "produto": "Monster Khaotic",
-        "inicial": 11,
-        "final": 8,
-        "variacao": -3
-    },
-    {
-        "produto": "Red Bull Tradicional",
-        "inicial": 69,
-        "final": 40,
-        "variacao": -29
-    },
-    {
-        "produto": "Red Bull Tropical",
-        "inicial": 35,
-        "final": 11,
-        "variacao": -24
-    },
-    {
-        "produto": "Xeque Mate",
-        "inicial": 90,
-        "final": 14,
-        "variacao": -76
-    },
-    {
-        "produto": "Jack Daniels CoCke",
-        "inicial": 30,
-        "final": 18,
-        "variacao": -12
-    },
-    {
-        "produto": "Aperol",
-        "inicial": 8,
-        "final": 7,
-        "variacao": -1
-    },
-    {
-        "produto": "Montilla Blanco",
-        "inicial": 3,
-        "final": 0,
-        "variacao": -3
-    },
-    {
-        "produto": "Montilla Ouro",
-        "inicial": 1,
-        "final": 0,
-        "variacao": -1
-    },
-    {
-        "produto": "Campari L",
-        "inicial": 1,
-        "final": 0,
-        "variacao": -1
-    },
-    {
-        "produto": "Campari 750ml",
-        "inicial": 3,
-        "final": 0,
-        "variacao": -3
-    },
-    {
-        "produto": "Dom Bré Amburana",
-        "inicial": 2,
-        "final": 2,
-        "variacao": 0
-    },
-    {
-        "produto": "Dom Bré Carvalho",
-        "inicial": 2,
-        "final": 2,
-        "variacao": 0
-    },
-    {
-        "produto": "Dom Bré Jequitibá",
-        "inicial": 2,
-        "final": 1,
-        "variacao": -1
-    },
-    {
-        "produto": "Dom Drinks L L",
-        "inicial": 15,
-        "final": 6,
-        "variacao": -9
-    },
-    {
-        "produto": "Espumante Brut",
-        "inicial": 5,
-        "final": 0,
-        "variacao": -5
-    },
-    {
-        "produto": "Espumante Salton Rosé",
-        "inicial": 0,
-        "final": 0,
-        "variacao": 0
-    },
-    {
-        "produto": "Gin Gordons",
-        "inicial": 5,
-        "final": 1,
-        "variacao": -4
-    },
-    {
-        "produto": "Gin Tanqueray",
-        "inicial": 3,
-        "final": 2,
-        "variacao": -1
-    },
-    {
-        "produto": "Jose Cuervo Prata",
-        "inicial": 2,
-        "final": 1,
-        "variacao": -1
-    },
-    {
-        "produto": "Jose Cuervo Ouro",
-        "inicial": 1,
-        "final": 2,
-        "variacao": 1
-    },
-    {
-        "produto": "Licor",
-        "inicial": 0,
-        "final": 0,
-        "variacao": 0
-    },
-    {
-        "produto": "Martini Bianco",
-        "inicial": 3,
-        "final": 0,
-        "variacao": -3
-    },
-    {
-        "produto": "Martini Rosso",
-        "inicial": 1,
-        "final": 1,
-        "variacao": 0
-    },
-    {
-        "produto": "Monin Grenadine",
-        "inicial": 0,
-        "final": 0,
-        "variacao": 0
-    },
-    {
-        "produto": "Vodka Absolut L",
-        "inicial": 2,
-        "final": 1,
-        "variacao": -1
-    },
-    {
-        "produto": "Vodka Absolut 750ml",
-        "inicial": 0,
-        "final": 0,
-        "variacao": 0
-    },
-    {
-        "produto": "Vodka Smirnoff 600ml",
-        "inicial": 21,
-        "final": 10,
-        "variacao": -11
-    },
-    {
-        "produto": "Whisky Black Label",
-        "inicial": 2,
-        "final": 3,
-        "variacao": 1
-    },
-    {
-        "produto": "Whisky Red Label L",
-        "inicial": 1,
-        "final": 0,
-        "variacao": -1
-    },
-    {
-        "produto": "Whisky Red Label 750ml",
-        "inicial": 1,
-        "final": 4,
-        "variacao": 3
-    },
-    {
-        "produto": "Whisky Buchanans",
-        "inicial": 0,
-        "final": 0,
-        "variacao": 0
-    },
-    {
-        "produto": "Whisky Chivas",
-        "inicial": 0,
-        "final": 0,
-        "variacao": 0
-    },
-    {
-        "produto": "Whisky Jack Daniels",
-        "inicial": 2,
-        "final": 0,
-        "variacao": -2
-    },
-    {
-        "produto": "Whisky Jameson",
-        "inicial": 1,
-        "final": 0,
-        "variacao": -1
-    },
-    {
-        "produto": "Whisky Old Parr",
-        "inicial": 0,
-        "final": 0,
-        "variacao": 0
-    },
-    {
-        "produto": "Vinho Merlot",
-        "inicial": 0,
-        "final": 0,
-        "variacao": 0
-    },
-    {
-        "produto": "Vinho Chardonnay",
-        "inicial": 0,
-        "final": 0,
-        "variacao": 0
-    },
-    {
-        "produto": "Vinho Carbenet Sauvignon",
-        "inicial": 0,
-        "final": 0,
-        "variacao": 0
-    },
-    {
-        "produto": "Vinho Tempranillo",
-        "inicial": 0,
-        "final": 0,
-        "variacao": 0
-    },
-    {
-        "produto": "Vinho Malbec",
-        "inicial": 0,
-        "final": 0,
-        "variacao": 0
-    }
-];
-const VENDAS_INICIAL  = [
-    {
-        "grupo": "BEBIDAS DIVERSAS",
-        "material": "ÁGUA SEM GÁS",
-        "qtde": 265,
-        "valor": 1590.0
-    },
-    {
-        "grupo": "BEBIDAS DIVERSAS",
-        "material": "ÁGUA MAMBA COM GÁS",
-        "qtde": 51,
-        "valor": 408.0
-    },
-    {
-        "grupo": "BEBIDAS DIVERSAS",
-        "material": "ÁGUA TÔNICA",
-        "qtde": 2,
-        "valor": 20.0
-    },
-    {
-        "grupo": "BEBIDAS DIVERSAS",
-        "material": "SUCO DEL VALLE",
-        "qtde": 7,
-        "valor": 70.0
-    },
-    {
-        "grupo": "BEBIDAS DIVERSAS",
-        "material": "REFRIGERANTE",
-        "qtde": 98,
-        "valor": 980.0
-    },
-    {
-        "grupo": "BEBIDAS DIVERSAS",
-        "material": "RED BULL",
-        "qtde": 33,
-        "valor": 825.0
-    },
-    {
-        "grupo": "BEBIDAS DIVERSAS",
-        "material": "MONSTER ENERGY",
-        "qtde": 48,
-        "valor": 1200.0
-    },
-    {
-        "grupo": "BEBIDAS DIVERSAS",
-        "material": "XEQUE MATE",
-        "qtde": 64,
-        "valor": 1600.0
-    },
-    {
-        "grupo": "BEBIDAS DIVERSAS",
-        "material": "CRYSTAL SEM GÁS",
-        "qtde": 13,
-        "valor": 78.0
-    },
-    {
-        "grupo": "BEBIDAS DIVERSAS",
-        "material": "MONSTER ULTRA",
-        "qtde": 3,
-        "valor": 75.0
-    },
-    {
-        "grupo": "BEBIDAS DIVERSAS",
-        "material": "DEL VALLE LIMONADA TROP",
-        "qtde": 2,
-        "valor": 20.0
-    },
-    {
-        "grupo": "BEBIDAS DIVERSAS",
-        "material": "MONSTER S/ AÇÚCAR",
-        "qtde": 28,
-        "valor": 700.0
-    },
-    {
-        "grupo": "BEBIDAS DIVERSAS",
-        "material": "MONSTER PIPELINE",
-        "qtde": 3,
-        "valor": 75.0
-    },
-    {
-        "grupo": "BEBIDAS DIVERSAS",
-        "material": "CRYSTAL COM GÁS",
-        "qtde": 12,
-        "valor": 96.0
-    },
-    {
-        "grupo": "CACHAÇA",
-        "material": "DOM BRE TRADICIONAL",
-        "qtde": 8,
-        "valor": 120.0
-    },
-    {
-        "grupo": "CERVEJAS ESPECIAIS",
-        "material": "EISENBAHN PALE ALE",
-        "qtde": 18,
-        "valor": 342.0
-    },
-    {
-        "grupo": "CERVEJAS ESPECIAIS",
-        "material": "EISENBAHN IPA",
-        "qtde": 33,
-        "valor": 627.0
-    },
-    {
-        "grupo": "CERVEJAS ESPECIAIS",
-        "material": "EISENBAHN SESSION IPA",
-        "qtde": 3,
-        "valor": 57.0
-    },
-    {
-        "grupo": "CERVEJAS ESPECIAIS",
-        "material": "EISENBAHN WEIZENBIER",
-        "qtde": 5,
-        "valor": 95.0
-    },
-    {
-        "grupo": "CERVEJAS LONG NECK",
-        "material": "EISENBAHN PILSEN",
-        "qtde": 779,
-        "valor": 10906.0
-    },
-    {
-        "grupo": "CERVEJAS LONG NECK",
-        "material": "EISENBAHN UNFILTERED",
-        "qtde": 65,
-        "valor": 910.0
-    },
-    {
-        "grupo": "CERVEJAS LONG NECK",
-        "material": "SOL",
-        "qtde": 43,
-        "valor": 688.0
-    },
-    {
-        "grupo": "CERVEJAS LONG NECK",
-        "material": "HEINEKEN",
-        "qtde": 361,
-        "valor": 7220.0
-    },
-    {
-        "grupo": "CERVEJAS LONG NECK",
-        "material": "BLUE MOON",
-        "qtde": 9,
-        "valor": 225.0
-    },
-    {
-        "grupo": "CERVEJAS LONG NECK",
-        "material": "LAGUNITAS",
-        "qtde": 3,
-        "valor": 75.0
-    },
-    {
-        "grupo": "CERVEJAS LONG NECK",
-        "material": "HEINEKEN SEM ALCOOL",
-        "qtde": 13,
-        "valor": 260.0
-    },
-    {
-        "grupo": "CERVEJAS LONG NECK",
-        "material": "PRAYA SEM GLÚTEN",
-        "qtde": 16,
-        "valor": 304.0
-    },
-    {
-        "grupo": "CERVEJAS LONG NECK",
-        "material": "AMSTEL",
-        "qtde": 30,
-        "valor": 420.0
-    },
-    {
-        "grupo": "COMBOS",
-        "material": "VODKA SMIRNOFF + 3 MONSTER",
-        "qtde": 1,
-        "valor": 230.0
-    },
-    {
-        "grupo": "DOSES",
-        "material": "VODKA SMIRNOFF",
-        "qtde": 15,
-        "valor": 300.0
-    },
-    {
-        "grupo": "DOSES",
-        "material": "VODKA ABSOLUT",
-        "qtde": 2,
-        "valor": 50.0
-    },
-    {
-        "grupo": "DOSES",
-        "material": "CAMPARI",
-        "qtde": 3,
-        "valor": 54.0
-    },
-    {
-        "grupo": "DOSES",
-        "material": "TEQUILA",
-        "qtde": 1,
-        "valor": 40.0
-    },
-    {
-        "grupo": "DRINKS",
-        "material": "MOJITO",
-        "qtde": 14,
-        "valor": 364.0
-    },
-    {
-        "grupo": "DRINKS",
-        "material": "CUBA LIBRE",
-        "qtde": 14,
-        "valor": 364.0
-    },
-    {
-        "grupo": "DRINKS",
-        "material": "NEGRONI",
-        "qtde": 5,
-        "valor": 130.0
-    },
-    {
-        "grupo": "DRINKS",
-        "material": "APEROL SPRITZ",
-        "qtde": 13,
-        "valor": 416.0
-    },
-    {
-        "grupo": "DRINKS",
-        "material": "GIN TROPICAL",
-        "qtde": 20,
-        "valor": 600.0
-    },
-    {
-        "grupo": "DRINKS",
-        "material": "GIN TONICA TANQUERAI",
-        "qtde": 2,
-        "valor": 90.0
-    },
-    {
-        "grupo": "DRINKS",
-        "material": "GIN TONICA",
-        "qtde": 11,
-        "valor": 330.0
-    },
-    {
-        "grupo": "DRINKS CLÁSSICOS",
-        "material": "CAIPIRINHA MORANGO",
-        "qtde": 10,
-        "valor": 240.0
-    },
-    {
-        "grupo": "DRINKS CLÁSSICOS",
-        "material": "CAIPIVODKA SMIRNOFF MORANGO",
-        "qtde": 13,
-        "valor": 312.0
-    },
-    {
-        "grupo": "DRINKS CLÁSSICOS",
-        "material": "SODA ITALIANA",
-        "qtde": 6,
-        "valor": 120.0
-    },
-    {
-        "grupo": "DRINKS CLÁSSICOS",
-        "material": "CAIPIVODKA ABSOLUT MORANGO",
-        "qtde": 1,
-        "valor": 32.0
-    },
-    {
-        "grupo": "DRINKS CLÁSSICOS",
-        "material": "CAIPIVODKA SMIRNOFF MARACUJA",
-        "qtde": 10,
-        "valor": 240.0
-    },
-    {
-        "grupo": "DRINKS CLÁSSICOS",
-        "material": "CAIPIVODKA SMIRNOFF LIMAO",
-        "qtde": 47,
-        "valor": 1128.0
-    },
-    {
-        "grupo": "DRINKS CLÁSSICOS",
-        "material": "CAIPIVODKA SMIRNOFF ABACAXI",
-        "qtde": 2,
-        "valor": 48.0
-    },
-    {
-        "grupo": "DRINKS CLÁSSICOS",
-        "material": "CAIPIRINHA MARACUJA",
-        "qtde": 21,
-        "valor": 504.0
-    },
-    {
-        "grupo": "DRINKS CLÁSSICOS",
-        "material": "CAIPIRINHA LIMAO",
-        "qtde": 69,
-        "valor": 1656.0
-    },
-    {
-        "grupo": "DRINKS CLÁSSICOS",
-        "material": "CAIPIRINHA ABACAXI",
-        "qtde": 4,
-        "valor": 96.0
-    },
-    {
-        "grupo": "DRINKS TEQUILA",
-        "material": "APEROL MARGARITA",
-        "qtde": 5,
-        "valor": 160.0
-    },
-    {
-        "grupo": "DRINKS WHISKIES",
-        "material": "MARACUJACK",
-        "qtde": 13,
-        "valor": 416.0
-    },
-    {
-        "grupo": "DRINKS WHISKIES",
-        "material": "JACK COKE",
-        "qtde": 7,
-        "valor": 224.0
-    },
-    {
-        "grupo": "ESPETINHOS",
-        "material": "ALCATRA",
-        "qtde": 21,
-        "valor": 420.0
-    },
-    {
-        "grupo": "ESPETINHOS",
-        "material": "MEDALHÃO DE FRANGO",
-        "qtde": 8,
-        "valor": 160.0
-    },
-    {
-        "grupo": "ESPETINHOS",
-        "material": "FRANGO",
-        "qtde": 15,
-        "valor": 180.0
-    },
-    {
-        "grupo": "GINS",
-        "material": "GIN NIMAS",
-        "qtde": 6,
-        "valor": 180.0
-    },
-    {
-        "grupo": "GINS",
-        "material": "GIN TANQUERAY",
-        "qtde": 4,
-        "valor": 180.0
-    },
-    {
-        "grupo": "HAMBURGUER",
-        "material": "CULTURAL BURGUER",
-        "qtde": 30,
-        "valor": 870.0
-    },
-    {
-        "grupo": "PORÇÕES",
-        "material": "FRITAS C\\ CHEDDAR E BACON",
-        "qtde": 14,
-        "valor": 546.0
-    },
-    {
-        "grupo": "PORÇÕES",
-        "material": "PASTEL ANGÚ COM CARNE 10UN",
-        "qtde": 3,
-        "valor": 117.0
-    },
-    {
-        "grupo": "Serviços",
-        "material": "VENDA AVULSA",
-        "qtde": 28,
-        "valor": 28.0
-    },
-    {
-        "grupo": "VARIADOS",
-        "material": "HALLS",
-        "qtde": 1,
-        "valor": 5.0
-    },
-    {
-        "grupo": "VINHOS",
-        "material": "VINHO BRANCO",
-        "qtde": 1,
-        "valor": 98.0
-    },
-    {
-        "grupo": "WHISKIES DOSES",
-        "material": "RED LABEL",
-        "qtde": 31,
-        "valor": 775.0
-    },
-    {
-        "grupo": "WHISKIES DOSES",
-        "material": "BLACK LABEL",
-        "qtde": 4,
-        "valor": 180.0
-    },
-    {
-        "grupo": "WHISKIES DOSES",
-        "material": "JACK DANIELS",
-        "qtde": 7,
-        "valor": 245.0
-    },
-    {
-        "grupo": "YOLO DOCES",
-        "material": "BRIGADEIRO",
-        "qtde": 14,
-        "valor": 84.0
-    },
-    {
-        "grupo": "YOLO DOCES",
-        "material": "PALHA ITALIANA",
-        "qtde": 8,
-        "valor": 120.0
-    },
-    {
-        "grupo": "YOLO DOCES",
-        "material": "COOKIE",
-        "qtde": 11,
-        "valor": 231.0
-    }
+// ─── RAW DATA ────────────────────────────────────────────────────────────────
+const rawData = [
+  // date, produto, inicio, final
+  ["2026-06-06","Eisen Pilsen",976,500],
+  ["2026-06-06","Heineken",795,491],
+  ["2026-06-06","Amstel",156,86],
+  ["2026-06-06","Praya",20,13],
+  ["2026-06-06","Heineken Zero",88,88],
+  ["2026-06-06","Unfiltered",65,38],
+  ["2026-06-06","Session",0,0],
+  ["2026-06-06","IPA",69,62],
+  ["2026-06-06","Weissbier",30,28],
+  ["2026-06-06","Pale Ale",63,63],
+  ["2026-06-06","Lagunitas",21,5],
+  ["2026-06-06","Sol",236,191],
+  ["2026-06-06","Sol Zero",45,45],
+  ["2026-06-06","Blue Moon",6,1],
+  ["2026-06-06","Ultra",0,0],
+  ["2026-06-06","Águas",112,76],
+  ["2026-06-06","Água c/ gás",127,58],
+  ["2026-06-06","Suco Pêssego",19,18],
+  ["2026-06-06","Suco Manga",29,19],
+  ["2026-06-06","Suco Maracujá",12,10],
+  ["2026-06-06","Limonada Tropical",11,11],
+  ["2026-06-06","Limonada Clássica",11,9],
+  ["2026-06-06","Suco Goiaba",21,20],
+  ["2026-06-06","Suco Uva",19,19],
+  ["2026-06-06","Citrus",26,11],
+  ["2026-06-06","Tônica",25,43],
+  ["2026-06-06","Fanta Laranja",17,17],
+  ["2026-06-06","Fanta Uva",3,0],
+  ["2026-06-06","Fanta Guaraná",17,8],
+  ["2026-06-06","Fanta Guaraná Zero",17,12],
+  ["2026-06-06","Sprite",9,0],
+  ["2026-06-06","Sprite Zero",19,14],
+  ["2026-06-06","Coca Zero Garrafa",38,21],
+  ["2026-06-06","Coca Cola Garrafa",63,32],
+  ["2026-06-06","Coca Cola Zero",16,0],
+  ["2026-06-06","Coca Cola",22,5],
+  ["2026-06-06","Monster Normal",29,21],
+  ["2026-06-06","Monster Zero",19,18],
+  ["2026-06-06","Monster Ultra",15,1],
+  ["2026-06-06","Monster Mango",12,14],
+  ["2026-06-06","Monster Mango Zero",10,7],
+  ["2026-06-06","Monster Pipeline",9,8],
+  ["2026-06-06","Red Bull",86,64],
+  ["2026-06-06","Red Bull Tropical",32,28],
+  ["2026-06-06","Xeque Mate",128,28],
+
+  ["2026-06-07","Eisen Pilsen",816,539],
+  ["2026-06-07","Heineken",723,588],
+  ["2026-06-07","Amstel",72,0],
+  ["2026-06-07","Praya",16,12],
+  ["2026-06-07","Heineken Zero",88,85],
+  ["2026-06-07","Unfiltered",38,38],
+  ["2026-06-07","Session",0,0],
+  ["2026-06-07","IPA",62,62],
+  ["2026-06-07","Weissbier",28,28],
+  ["2026-06-07","Pale Ale",63,62],
+  ["2026-06-07","Lagunitas",5,5],
+  ["2026-06-07","Sol",191,191],
+  ["2026-06-07","Sol Zero",45,45],
+  ["2026-06-07","Blue Moon",1,0],
+  ["2026-06-07","Ultra",0,0],
+  ["2026-06-07","Águas",136,60],
+  ["2026-06-07","Água c/ gás",118,83],
+  ["2026-06-07","Suco Pêssego",18,18],
+  ["2026-06-07","Suco Manga",19,19],
+  ["2026-06-07","Suco Maracujá",10,10],
+  ["2026-06-07","Limonada Tropical",11,11],
+  ["2026-06-07","Limonada Clássica",9,9],
+  ["2026-06-07","Suco Goiaba",20,20],
+  ["2026-06-07","Suco Uva",19,18],
+  ["2026-06-07","Citrus",11,11],
+  ["2026-06-07","Tônica",43,42],
+  ["2026-06-07","Fanta Laranja",17,17],
+  ["2026-06-07","Fanta Uva",0,0],
+  ["2026-06-07","Fanta Guaraná",8,8],
+  ["2026-06-07","Fanta Guaraná Zero",12,12],
+  ["2026-06-07","Sprite",0,0],
+  ["2026-06-07","Sprite Zero",14,10],
+  ["2026-06-07","Coca Zero Garrafa",21,0],
+  ["2026-06-07","Coca Cola Garrafa",32,14],
+  ["2026-06-07","Coca Cola Zero",0,0],
+  ["2026-06-07","Coca Cola",5,0],
+  ["2026-06-07","Monster Normal",21,20],
+  ["2026-06-07","Monster Zero",18,18],
+  ["2026-06-07","Monster Ultra",1,0],
+  ["2026-06-07","Monster Mango",14,14],
+  ["2026-06-07","Monster Mango Zero",7,7],
+  ["2026-06-07","Monster Pipeline",8,8],
+  ["2026-06-07","Red Bull",64,62],
+  ["2026-06-07","Red Bull Tropical",28,25],
+  ["2026-06-07","Xeque Mate",28,24],
+
+  // ── Período 26/06–27/07/2026 ──
+  ["2026-06-26","Eisen Pilsen",1105,702],
+  ["2026-06-26","Heineken",809,643],
+  ["2026-06-26","Amstel",43,66],
+  ["2026-06-26","Praya",31,15],
+  ["2026-06-26","Heineken Zero",65,54],
+  ["2026-06-26","Unfiltered",74,6],
+  ["2026-06-26","Session",0,0],
+  ["2026-06-26","IPA",87,51],
+  ["2026-06-26","Weissbier",34,29],
+  ["2026-06-26","Pale Ale",62,37],
+  ["2026-06-26","Lagunitas",7,6],
+  ["2026-06-26","Sol",228,237],
+  ["2026-06-26","Sol Zero",32,36],
+  ["2026-06-26","Blue Moon",24,34],
+  ["2026-06-26","Monster Ultra",36,10],
+  ["2026-06-26","Águas",435,197],
+  ["2026-06-26","Água c/ gás",283,233],
+  ["2026-06-26","Suco Pêssego",20,19],
+  ["2026-06-26","Suco Manga",18,13],
+  ["2026-06-26","Suco Maracujá",16,16],
+  ["2026-06-26","Limonada Tropical",6,5],
+  ["2026-06-26","Limonada Clássica",2,6],
+  ["2026-06-26","Suco Goiaba",21,21],
+  ["2026-06-26","Suco Uva",22,21],
+  ["2026-06-26","Citrus",14,12],
+  ["2026-06-26","Tônica",49,34],
+  ["2026-06-26","Fanta Laranja",13,11],
+  ["2026-06-26","Fanta Uva",0,0],
+  ["2026-06-26","Fanta Guaraná",15,11],
+  ["2026-06-26","Fanta Guaraná Zero",29,27],
+  ["2026-06-26","Sprite",10,7],
+  ["2026-06-26","Sprite Zero",68,37],
+  ["2026-06-26","Coca Zero Garrafa",49,28],
+  ["2026-06-26","Coca Cola Garrafa",43,17],
+  ["2026-06-26","Coca Cola Zero",50,28],
+  ["2026-06-26","Coca Cola",40,24],
+  ["2026-06-26","Monster Normal",23,9],
+  ["2026-06-26","Monster Zero",30,10],
+  ["2026-06-26","Monster Mango",27,10],
+  ["2026-06-26","Monster Mango Zero",21,17],
+  ["2026-06-26","Monster Pipeline",6,1],
+  ["2026-06-26","Red Bull",69,40],
+  ["2026-06-26","Red Bull Tropical",35,11],
+  ["2026-06-26","Xeque Mate",90,14],
 ];
 
-const MAPEAMENTO_PADRAO = {
-    "Amstel": [
-        "AMSTEL"
-    ],
-    "Amstel Ultra": [],
-    "Heineken": [
-        "HEINEKEN"
-    ],
-    "Heineken Zero": [
-        "HEINEKEN SEM ALCOOL"
-    ],
-    "Heineken s/ Glúten": [],
-    "Eisenbahn Pilsen": [
-        "EISENBAHN PILSEN"
-    ],
-    "Eisenbahn Ipa": [
-        "EISENBAHN IPA"
-    ],
-    "Eisenbahn Pale Ale": [
-        "EISENBAHN PALE ALE"
-    ],
-    "Eisenbahn Session Ipa": [
-        "EISENBAHN SESSION IPA"
-    ],
-    "Eisenbahn Unfiltered": [
-        "EISENBAHN UNFILTERED"
-    ],
-    "Eisenbahn Weizenbier": [
-        "EISENBAHN WEIZENBIER"
-    ],
-    "Lgunitas Ipa": [
-        "LAGUNITAS"
-    ],
-    "Sol": [
-        "SOL"
-    ],
-    "Sol Zero": [],
-    "Blue Moon": [
-        "BLUE MOON"
-    ],
-    "Praya Classica": [
-        "PRAYA SEM GLÚTEN"
-    ],
-    "Praya Lager": [],
-    "Água Crystal s/ gás": [
-        "ÁGUA SEM GÁS",
-        "CRYSTAL SEM GÁS"
-    ],
-    "Água Crystal c/ gás": [
-        "CRYSTAL COM GÁS"
-    ],
-    "Água s/ gás Mamba": [],
-    "Água c/ gás Mamba": [
-        "ÁGUA MAMBA COM GÁS"
-    ],
-    "Coca Cola Lata": [
-        "REFRIGERANTE"
-    ],
-    "Coca Cola Lata Zero": [],
-    "Coca Cola Garrafa": [],
-    "Coca Cola Garrafa Zero": [],
-    "Fanta Guaraná": [],
-    "Fanta Guaraná Zero": [],
-    "Fanta Uva": [],
-    "Fanta Laranja": [],
-    "Sprite": [],
-    "Sprite Zero": [],
-    "Schweppes Citrus": [],
-    "Schweppes Tônica": [
-        "ÁGUA TÔNICA"
-    ],
-    "Schweppes Ginger Ale": [],
-    "Del Valle Goiaba Zero": [
-        "SUCO DEL VALLE"
-    ],
-    "Del Valle Manga": [],
-    "Del Valle Maracujá": [],
-    "Del Valle Pêssego": [],
-    "Del Valle Uva": [],
-    "Del Valle Tropical": [],
-    "Del Valle Clássica": [],
-    "Monster Energy Tradicional": [
-        "MONSTER ENERGY"
-    ],
-    "Monster Energy Zero": [
-        "MONSTER S/ AÇÚCAR"
-    ],
-    "Monster Ultra": [
-        "MONSTER ULTRA"
-    ],
-    "Monster Ultra Fiesta": [],
-    "Monster Mango Loco": [],
-    "Monster Pipeline": [
-        "MONSTER PIPELINE"
-    ],
-    "Monster Watermalon": [],
-    "Monster Khaotic": [],
-    "Red Bull Tradicional": [
-        "RED BULL"
-    ],
-    "Red Bull Tropical": [],
-    "Xeque Mate": [
-        "XEQUE MATE"
-    ],
-    "Jack Daniels CoCke": [],
-    "Aperol": [],
-    "Montilla Blanco": [],
-    "Montilla Ouro": [],
-    "Campari 1 L": [
-        "CAMPARI"
-    ],
-    "Campari 750ml": [],
-    "Dom Brê Amburana": [
-        "DOM BRE TRADICIONAL"
-    ],
-    "Dom Brê Carvalho": [],
-    "Dom Brê Jequitibá": [],
-    "Dom Drinks 15 L": [],
-    "Espumante Brut": [],
-    "Espumante Salton Rosé": [],
-    "Gin Gordons": [],
-    "Gin Tanqueray": [
-        "GIN TANQUERAY"
-    ],
-    "Jose Cuervo Prata": [],
-    "Jose Cuervo Ouro": [],
-    "Licor 43": [],
-    "Martini Bianco": [],
-    "Martini Rosso": [],
-    "Monin Grenadine": [],
-    "Vodka Absolut 1 L": [
-        "VODKA ABSOLUT"
-    ],
-    "Vodka Absolut 750ml": [],
-    "Vodka Smirnoff 600ml": [
-        "VODKA SMIRNOFF"
-    ],
-    "Whisky Black Label": [
-        "BLACK LABEL"
-    ],
-    "Whisky Red Label 1 L": [
-        "RED LABEL"
-    ],
-    "Whisky Red Label 750ml": [],
-    "Whisky Buchanans": [],
-    "Whisky Chivas 12": [],
-    "Whisky Jack Daniels": [
-        "JACK DANIELS"
-    ],
-    "Whisky Jameson": [],
-    "Whisky Old Parr 12": [],
-    "Vinho Merlot": [],
-    "Vinho Chardonnay": [
-        "VINHO BRANCO"
-    ],
-    "Vinho Carbenet Sauvignon": [],
-    "Vinho Tempranillo": [],
-    "Vinho Malbec": []
+// ─── VENDAS (dados extraídos dos PDFs de vendas) ─────────────────────────────
+// Chave: "data|produto" → quantidade vendida
+const salesData = {
+  // ── 06/06/2026 ──
+  "2026-06-06|Eisen Pilsen":    474,
+  "2026-06-06|Heineken":        242,
+  "2026-06-06|Amstel":           54,  // 53 Amstel + 1 Amstel Ultra
+  "2026-06-06|Praya":            15,
+  "2026-06-06|Heineken Zero":     1,
+  "2026-06-06|Unfiltered":       12,
+  "2026-06-06|Session":           2,
+  "2026-06-06|IPA":              20,
+  "2026-06-06|Lagunitas":        12,
+  "2026-06-06|Sol":              31,
+  "2026-06-06|Sol Zero":          4,  // 3 Sol Sem Alcool + 1 Sol Sem Álcool
+  "2026-06-06|Blue Moon":         9,
+  "2026-06-06|Águas":           211,
+  "2026-06-06|Água c/ gás":      88,  // 79 Água Mamba + 9 Crystal com gás
+  "2026-06-06|Tônica":            1,
+  "2026-06-06|Red Bull":         22,
+  "2026-06-06|Monster Normal":   27,
+  "2026-06-06|Monster Ultra":     1,
+  "2026-06-06|Monster Zero":      7,
+  "2026-06-06|Xeque Mate":      133,
+
+  // ── 07/06/2026 ──
+  "2026-06-07|Eisen Pilsen":    201,
+  "2026-06-07|Heineken":         57,
+  "2026-06-07|Amstel":           18,
+  "2026-06-07|Praya":             4,
+  "2026-06-07|Heineken Zero":     3,
+  "2026-06-07|Unfiltered":        9,
+  "2026-06-07|Session":           1,
+  "2026-06-07|IPA":              12,
+  "2026-06-07|Pale Ale":          3,
+  "2026-06-07|Sol":               5,
+  "2026-06-07|Sol Zero":          2,  // 1 + 1 Sol Sem Álcool
+  "2026-06-07|Blue Moon":         2,
+  "2026-06-07|Águas":            59,  // 47 Água Sem Gás + 12 Crystal Sem Gás
+  "2026-06-07|Água c/ gás":      11,  // 8 Água Mamba + 3 Crystal com Gás
+  "2026-06-07|Red Bull":          7,
+  "2026-06-07|Monster Normal":    7,
+  "2026-06-07|Monster Ultra":     2,
+  "2026-06-07|Monster Zero":      2,
+  "2026-06-07|Monster Pipeline":  1,
+  "2026-06-07|Xeque Mate":       33,
+
+  // ── 26/06–27/07/2026 ──
+  "2026-06-26|Eisen Pilsen": 779,
+  "2026-06-26|Heineken": 361,
+  "2026-06-26|Amstel": 30,
+  "2026-06-26|Praya": 16,
+  "2026-06-26|Heineken Zero": 13,
+  "2026-06-26|Unfiltered": 65,
+  "2026-06-26|Session": 3,
+  "2026-06-26|IPA": 33,
+  "2026-06-26|Weissbier": 5,
+  "2026-06-26|Pale Ale": 18,
+  "2026-06-26|Lagunitas": 3,
+  "2026-06-26|Sol": 43,
+  "2026-06-26|Blue Moon": 9,
+  "2026-06-26|Monster Ultra": 3,
+  "2026-06-26|Águas": 278,
+  "2026-06-26|Água c/ gás": 63,
+  "2026-06-26|Limonada Tropical": 2,
+  "2026-06-26|Suco Goiaba": 7,
+  "2026-06-26|Tônica": 2,
+  "2026-06-26|Coca Cola": 98,
+  "2026-06-26|Monster Normal": 48,
+  "2026-06-26|Monster Zero": 28,
+  "2026-06-26|Monster Mango": 3,
+  "2026-06-26|Monster Pipeline": 3,
+  "2026-06-26|Red Bull": 33,
+  "2026-06-26|Xeque Mate": 64,
 };
 
-const PERIODO_LABEL = "26/06 - 27/07";
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let mode = 'day';
+let searchTerm = '';
+let sortCol = null;
+let sortDir = 1;
+// key: "date|produto" → itens vendidos (editável)
+let vendidos = JSON.parse(localStorage.getItem('vendidos') || '{}');
 
-// ============================================================
-// ESTADO
-// ============================================================
-let db          = JSON.parse(localStorage.getItem('cultural_db') || 'null');
-let mapeamento  = {};
-let periodoAtivo = 0;
-let sortCol     = 'diferenca';
-let sortAsc     = true;
-
-// ============================================================
-// INIT
-// ============================================================
+// ─── INIT ────────────────────────────────────────────────────────────────────
 function init() {
-  if (!db) {
-    db = {
-      periodos: [{
-        label: PERIODO_LABEL,
-        gerado_em: "2026-07-03",
-        estoque: ESTOQUE_INICIAL,
-        vendas:  VENDAS_INICIAL
-      }],
-      mapeamento: MAPEAMENTO_PADRAO
+  const dates = [...new Set(rawData.map(r => r[0]))].sort();
+  const months = [...new Set(dates.map(d => d.slice(0,7)))].sort();
+
+  const selDay = document.getElementById('sel-day');
+  dates.forEach(d => {
+    const opt = document.createElement('option');
+    opt.value = d;
+    opt.textContent = fmtDate(d);
+    selDay.appendChild(opt);
+  });
+
+  const selMonth = document.getElementById('sel-month');
+  months.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m;
+    opt.textContent = fmtMonth(m);
+    selMonth.appendChild(opt);
+  });
+
+  if (dates.length) {
+    document.getElementById('date-from').value = dates[0];
+    document.getElementById('date-to').value = dates[dates.length - 1];
+  }
+  render();
+}
+
+function fmtDate(d) {
+  const [y,m,day] = d.split('-');
+  return `${day}/${m}/${y}`;
+}
+function fmtMonth(m) {
+  const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const [y, mi] = m.split('-');
+  return `${months[parseInt(mi)-1]} ${y}`;
+}
+
+// ─── FILTERS ─────────────────────────────────────────────────────────────────
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => { if(b.textContent.toLowerCase().includes(m === 'day' ? 'dia' : m === 'month' ? 'mês' : 'per')) b.classList.add('active'); });
+  document.getElementById('fg-day').style.display = m === 'day' ? '' : 'none';
+  document.getElementById('fg-month').style.display = m === 'month' ? '' : 'none';
+  document.getElementById('fg-period').style.display = m === 'period' ? '' : 'none';
+  render();
+}
+
+function getFilteredDates() {
+  const all = [...new Set(rawData.map(r => r[0]))].sort();
+  if (mode === 'day') {
+    const v = document.getElementById('sel-day').value;
+    return v === 'all' ? all : [v];
+  }
+  if (mode === 'month') {
+    const v = document.getElementById('sel-month').value;
+    return v === 'all' ? all : all.filter(d => d.startsWith(v));
+  }
+  if (mode === 'period') {
+    const from = document.getElementById('date-from').value;
+    const to = document.getElementById('date-to').value;
+    return all.filter(d => (!from || d >= from) && (!to || d <= to));
+  }
+  return all;
+}
+
+function filterSearch(val) {
+  searchTerm = val.toLowerCase();
+  render();
+}
+
+// ─── ROWS ────────────────────────────────────────────────────────────────────
+// Dia único  → 1 linha por produto: variação = final − início daquele dia
+// Múltiplos  → 1 linha por produto consolidada:
+//              variação = SOMA das variações diárias (Σ final_dia − início_dia)
+//              início   = início do 1º dia (referência)
+//              final    = final do último dia (referência)
+//              vendidos = soma de todos os dias
+function getTableRows(dates) {
+  if (dates.length === 1) {
+    return rawData
+      .filter(r => r[0] === dates[0])
+      .map(r => ({
+        produto:      r[1],
+        rawDate:      r[0],
+        dataLabel:    fmtDate(r[0]),
+        inicio:       r[2],
+        final:        r[3],
+        variacaoFixa: null,                   // calculada no render via final-inicio
+        vendidosKeys: [`${r[0]}|${r[1]}`],
+      }));
+  }
+
+  // Período: consolida por produto somando as variações de cada dia
+  const firstDate = dates[0];
+  const lastDate  = dates[dates.length - 1];
+  const produtos  = [...new Set(rawData.map(r => r[1]))];
+
+  return produtos.map(p => {
+    const daysWithData = dates
+      .map(d => rawData.find(r => r[0] === d && r[1] === p))
+      .filter(Boolean);
+
+    if (daysWithData.length === 0) return null;
+
+    // Variação do período = soma das variações individuais de cada dia
+    const variacaoPeriodo = daysWithData.reduce((sum, row) => sum + (row[3] - row[2]), 0);
+
+    const firstRow = rawData.find(r => r[0] === firstDate && r[1] === p);
+    const lastRow  = rawData.find(r => r[0] === lastDate  && r[1] === p);
+
+    return {
+      produto:      p,
+      rawDate:      firstDate,
+      dataLabel:    `${fmtDate(firstDate)} → ${fmtDate(lastDate)}`,
+      inicio:       firstRow ? firstRow[2] : 0,
+      final:        lastRow  ? lastRow[3]  : 0,
+      variacaoFixa: variacaoPeriodo,           // pré-calculada, não recalcular no render
+      vendidosKeys: dates.map(d => `${d}|${p}`),
     };
-    salvarDB();
+  }).filter(Boolean);
+}
+
+// ─── RENDER ──────────────────────────────────────────────────────────────────
+function render() {
+  const dates    = getFilteredDates();
+  const multiDay = dates.length > 1;
+
+  let rows = getTableRows(dates);
+
+  // Search filter
+  if (searchTerm) {
+    rows = rows.filter(r => r.produto.toLowerCase().includes(searchTerm));
   }
-  mapeamento = db.mapeamento;
-  periodoAtivo = 0;
-  renderPeriodoSelect();
-  renderTudo();
-}
 
-function salvarDB() {
-  localStorage.setItem('cultural_db', JSON.stringify(db));
-}
-
-// ============================================================
-// PERÍODO
-// ============================================================
-function renderPeriodoSelect() {
-  const sel = document.getElementById('periodo-select');
-  sel.innerHTML = db.periodos.map((p, i) =>
-    `<option value="${i}" ${i===periodoAtivo?'selected':''}>📅 ${p.label}</option>`
-  ).join('');
-}
-
-function trocarPeriodo() {
-  periodoAtivo = parseInt(document.getElementById('periodo-select').value);
-  renderTudo();
-}
-
-function getPeriodo() { return db.periodos[periodoAtivo]; }
-
-// ============================================================
-// CÁLCULO
-// ============================================================
-function vendasMap() {
-  const p = getPeriodo();
-  const map = {};
-  for (const v of p.vendas) {
-    const k = v.material.toUpperCase().trim();
-    if (!map[k]) map[k] = {qtde: 0, valor: 0, grupo: v.grupo};
-    map[k].qtde  += v.qtde;
-    map[k].valor += v.valor;
-  }
-  return map;
-}
-
-function calcularLinhas() {
-  const p      = getPeriodo();
-  const vmap   = vendasMap();
-  const linhas = [];
-
-  for (const item of p.estoque) {
-    const mats  = (mapeamento[item.produto] || []);
-    const vendas = mats.reduce((sum, m) => {
-      const k = m.toUpperCase().trim();
-      return sum + (vmap[k]?.qtde || 0);
+  // Compute derived fields
+  rows = rows.map(r => {
+    // Dia único: variacao = final - inicio | Período: usa soma pré-calculada
+    const variacao = r.variacaoFixa !== null ? r.variacaoFixa : (r.final ?? 0) - (r.inicio ?? 0);
+    // Usa valor editado pelo usuário (localStorage) se existir, senão usa salesData (PDF)
+    const vend = r.vendidosKeys.reduce((s, k) => {
+      const manual = vendidos[k];
+      return s + (manual !== undefined ? parseInt(manual) : (salesData[k] || 0));
     }, 0);
-    const consumido  = Math.abs(item.variacao);
-    const diferenca  = consumido - vendas; // positivo = saiu mais que vendeu
-    const semMapa    = mats.length === 0;
-    linhas.push({
-      produto:    item.produto,
-      inicial:    item.inicial,
-      final:      item.final,
-      variacao:   item.variacao,
-      vendas,
-      consumido,
-      diferenca,
-      semMapa
+    const diferenca = vend - Math.abs(variacao < 0 ? variacao : 0);
+    return { ...r, variacao, vend, diferenca };
+  });
+
+  // Sort
+  if (sortCol) {
+    rows.sort((a, b) => {
+      const av = a[sortCol], bv = b[sortCol];
+      if (typeof av === 'string') return av.localeCompare(bv) * sortDir;
+      return ((av ?? 0) - (bv ?? 0)) * sortDir;
     });
   }
-  return linhas;
+
+  // ── Summary: calculado somando exatamente as linhas da tabela ──
+  const validRows = rows.filter(r => r.inicio > 0 || r.final > 0);
+  document.getElementById('s-items').textContent   = validRows.length;
+  document.getElementById('s-inicio').textContent  = validRows.reduce((s, r) => s + (r.inicio || 0), 0).toLocaleString('pt-BR');
+  document.getElementById('s-final').textContent   = validRows.reduce((s, r) => s + (r.final  || 0), 0).toLocaleString('pt-BR');
+  const totalVar = validRows.reduce((s, r) => s + r.variacao, 0);
+  document.getElementById('s-variacao').textContent = (totalVar > 0 ? '+' : '') + totalVar.toLocaleString('pt-BR');
+  document.getElementById('s-vendidos').textContent = validRows.reduce((s, r) => s + r.vend, 0).toLocaleString('pt-BR');
+
+  // Title
+  document.getElementById('table-title').innerHTML = dates.length === 1
+    ? `Estoque <span class="day-badge">${fmtDate(dates[0])}</span>`
+    : `Estoque — ${dates.length} dias <span class="day-badge">${fmtDate(dates[0])} → ${fmtDate(dates[dates.length-1])}</span>`;
+
+  // Table
+  const tbody = document.getElementById('table-body');
+  tbody.innerHTML = '';
+
+  if (rows.length === 0) {
+    document.getElementById('main-table').style.display = 'none';
+    document.getElementById('empty-state').style.display = '';
+    return;
+  }
+  document.getElementById('main-table').style.display = '';
+  document.getElementById('empty-state').style.display = 'none';
+
+  rows.forEach(r => {
+    if (r.inicio === 0 && r.final === 0) return;
+
+    const tr = document.createElement('tr');
+    const varClass = r.variacao < 0 ? 'negative' : r.variacao > 0 ? 'positive' : 'zero';
+    const difClass = r.diferenca < 0 ? 'warning'  : r.diferenca > 0 ? 'positive' : 'zero';
+    const varSign  = r.variacao  > 0 ? '+' : '';
+    const difSign  = r.diferenca > 0 ? '+' : '';
+
+    // No período, a coluna Data mostra o range; no dia único mostra o badge do dia
+    const dataCell = `<td style="text-align:center;font-size:${multiDay ? '0.75' : '0.82'}rem;color:#888;">${r.dataLabel}</td>`;
+
+    // Chave de edição: no período usa todas as chaves para exibir a soma, mas grava na chave do último dia
+    const editKey  = r.vendidosKeys[r.vendidosKeys.length - 1];
+    const allKeys  = r.vendidosKeys.join(',');
+    // Indica se o valor veio do PDF (salesData) ou foi editado manualmente
+    const hasManual = r.vendidosKeys.some(k => vendidos[k] !== undefined);
+    const hasSales  = r.vendidosKeys.some(k => salesData[k] !== undefined);
+    const vendLabel = r.vend > 0
+      ? `${r.vend}${!hasManual && hasSales ? ' <span style="font-size:0.65rem;color:#27ae60;font-weight:600;">PDF</span>' : ''}`
+      : '<span class="no-data">clique p/ editar</span>';
+    const vendCell = `<td class="num editable" onclick="editVendidos(this,'${editKey}','${allKeys}')" title="Clique para editar. Valor carregado do PDF de vendas.">${vendLabel}</td>`;
+
+    tr.innerHTML = `
+      <td class="product">${r.produto}</td>
+      ${dataCell}
+      <td class="num">${r.inicio > 0 ? r.inicio : '<span class="no-data">—</span>'}</td>
+      <td class="num">${r.final  > 0 ? r.final  : '<span class="no-data">—</span>'}</td>
+      <td class="num ${varClass}">${varSign}${r.variacao}</td>
+      ${vendCell}
+      <td class="num ${difClass}">${r.vend > 0 || r.variacao !== 0 ? difSign + r.diferenca : '—'}</td>
+    `;
+    tbody.appendChild(tr);
+  });
 }
 
-// ============================================================
-// RENDER TABELA
-// ============================================================
-let _linhas = [];
+// ─── INLINE EDIT ─────────────────────────────────────────────────────────────
+// editKey  = chave do campo que será gravado (último dia em período múltiplo)
+// allKeys  = todas as chaves do período para calcular o total atual
+function editVendidos(td, editKey, allKeysStr) {
+  if (td.querySelector('input')) return;
+  const allKeys = allKeysStr ? allKeysStr.split(',') : [editKey];
+  // Mostra o total atual do período no campo
+  const cur = allKeys.reduce((s, k) => s + (parseInt(vendidos[k]) || 0), 0);
+  td.innerHTML = `<input class="inline-edit" type="number" min="0" value="${cur || ''}" autofocus>`;
+  const inp = td.querySelector('input');
+  inp.focus();
+  inp.select();
+  inp.addEventListener('blur', () => saveVendidos(editKey, inp.value));
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter') inp.blur();
+    if (e.key === 'Escape') { render(); }
+  });
+}
 
+function saveVendidos(key, val) {
+  const n = parseInt(val);
+  if (!isNaN(n) && n >= 0) {
+    vendidos[key] = n;
+  } else {
+    delete vendidos[key];
+  }
+  localStorage.setItem('vendidos', JSON.stringify(vendidos));
+  render();
+}
+
+// ─── SORT ────────────────────────────────────────────────────────────────────
 function sortBy(col) {
-  if (sortCol === col) sortAsc = !sortAsc;
-  else { sortCol = col; sortAsc = col !== 'diferenca'; }
-  renderTabela();
+  if (sortCol === col) { sortDir *= -1; } else { sortCol = col; sortDir = 1; }
+  updateSortUI();
+  render();
 }
 
-function renderTabela() {
-  const busca  = document.getElementById('filtro-busca').value.toLowerCase();
-  const status = document.getElementById('filtro-status').value;
-  const THRESH = 10;
+function toggleSortVendas() {
+  if (sortCol === 'vend') {
+    sortDir *= -1;
+  } else {
+    sortCol = 'vend';
+    sortDir = -1; // começa decrescente (mais vendidos primeiro)
+  }
+  updateSortUI();
+  render();
+}
 
-  let linhas = _linhas.filter(l => {
-    if (busca && !l.produto.toLowerCase().includes(busca)) return false;
-    if (status === 'alerta')   return Math.abs(l.diferenca) >= THRESH && !l.semMapa;
-    if (status === 'sem-mapa') return l.semMapa;
-    return true;
+function updateSortUI() {
+  // Reset todos os headers
+  document.querySelectorAll('thead th').forEach(th => {
+    th.classList.remove('col-sorted-asc', 'col-sorted-desc');
+    const icon = th.querySelector('.sort-icon');
+    if (icon) icon.textContent = '↕';
   });
 
-  linhas.sort((a, b) => {
-    let av = a[sortCol], bv = b[sortCol];
-    if (typeof av === 'string') av = av.toLowerCase(), bv = bv.toLowerCase();
-    return sortAsc ? (av > bv ? 1 : -1) : (av < bv ? 1 : -1);
+  // Destaca a coluna ativa
+  if (sortCol) {
+    const headers = document.querySelectorAll('thead th');
+    const colMap = ['produto', 'rawDate', 'inicio', 'final', 'variacao', 'vend', 'diferenca'];
+    headers.forEach((th, i) => {
+      if (colMap[i] === sortCol) {
+        th.classList.add(sortDir === 1 ? 'col-sorted-asc' : 'col-sorted-desc');
+        const icon = th.querySelector('.sort-icon');
+        if (icon) icon.textContent = sortDir === 1 ? '▲' : '▼';
+      }
+    });
+  }
+
+  // Atualiza botão dedicado de vendas
+  const btn = document.getElementById('btn-sort-vendas');
+  const ico = document.getElementById('sort-vendas-icon');
+  if (sortCol === 'vend') {
+    btn.className = sortDir === -1 ? 'btn-sort-vendas active-desc' : 'btn-sort-vendas active-asc';
+    ico.textContent = sortDir === -1 ? '▼' : '▲';
+    btn.childNodes[0].textContent = sortDir === -1 ? '🛒 Mais vendidos ' : '🛒 Menos vendidos ';
+  } else {
+    btn.className = 'btn-sort-vendas';
+    ico.textContent = '↕';
+    btn.childNodes[0].textContent = '🛒 Mais vendidos ';
+  }
+}
+
+// ─── EXPORT ──────────────────────────────────────────────────────────────────
+function exportCSV() {
+  const dates = getFilteredDates();
+  let rows = getTableRows(dates);
+  rows = rows.map(r => {
+    const inicio = r.inicio ?? 0;
+    const final = r.final ?? 0;
+    const variacao = final - inicio;
+    const vend = r.multiDay ? (r.vendidosOverride || 0) : (parseInt(vendidos[r.vendidosKey]) || 0);
+    const diferenca = vend - Math.abs(variacao < 0 ? variacao : 0);
+    return { ...r, variacao, vend, diferenca };
+  }).filter(r => r.inicio !== null || r.final !== null);
+
+  let csv = 'Produto,Data,Inicio,Final,Variacao Estoque,Itens Vendidos,Diferenca\n';
+  rows.forEach(r => {
+    csv += `"${r.produto}","${r.data}",${r.inicio ?? ''},${r.final ?? ''},${r.variacao},${r.vend},${r.diferenca}\n`;
   });
 
-  const tbody = document.getElementById('tbody-estoque');
-  tbody.innerHTML = linhas.map(l => {
-    const varCls  = l.variacao < 0 ? 'neg' : l.variacao > 0 ? 'pos' : 'zero';
-    const difSign = l.diferenca > 0 ? '+' : '';
-    const difCls  = l.diferenca > THRESH ? 'neg' : l.diferenca < -THRESH ? 'pos' : 'zero';
-    let badge;
-    if (l.semMapa) {
-      badge = '<span class="badge-sem">sem mapeamento</span>';
-    } else if (l.diferenca > THRESH) {
-      badge = `<span class="badge-alert">⚠ perda ${l.diferenca} un.</span>`;
-    } else if (l.diferenca < -THRESH) {
-      badge = `<span class="badge-warn">▲ excesso venda ${Math.abs(l.diferenca)} un.</span>`;
-    } else {
-      badge = '<span class="badge-ok">✓ ok</span>';
-    }
-    return `<tr>
-      <td class="produto">${l.produto}</td>
-      <td class="num">${l.inicial}</td>
-      <td class="num">${l.final}</td>
-      <td class="num ${varCls}">${l.variacao < 0 ? '' : '+'}${l.variacao}</td>
-      <td class="num">${l.semMapa ? '<span style="color:var(--muted)">—</span>' : l.vendas}</td>
-      <td class="num ${difCls}">${l.semMapa ? '<span style="color:var(--muted)">—</span>' : difSign + l.diferenca}</td>
-      <td>${badge}</td>
-    </tr>`;
-  }).join('');
-
-  document.getElementById('tabela-footer').textContent =
-    `${linhas.length} de ${_linhas.length} produtos`;
-
-  // Atualiza sort icons
-  document.querySelectorAll('thead th').forEach(th => th.classList.remove('sorted'));
-  const cols = ['produto','inicial','final','variacao','vendas','diferenca',''];
-  const idx  = cols.indexOf(sortCol);
-  if (idx >= 0) {
-    const ths = document.querySelectorAll('thead th');
-    if (ths[idx]) ths[idx].classList.add('sorted');
-  }
-}
-
-// ============================================================
-// CARDS
-// ============================================================
-function renderCards() {
-  const THRESH = 10;
-  const alertas = _linhas.filter(l => !l.semMapa && l.diferenca > THRESH).length;
-  const totalConsumido = _linhas.reduce((s,l) => s + l.consumido, 0);
-  const totalVendas    = _linhas.filter(l => !l.semMapa).reduce((s,l) => s + l.vendas, 0);
-  const perdas         = _linhas.filter(l => !l.semMapa && l.diferenca > THRESH)
-                                .reduce((s,l) => s + l.diferenca, 0);
-
-  document.getElementById('cards').innerHTML = `
-    <div class="card"><div class="card-label">Período</div>
-      <div class="card-value" style="font-size:16px">${getPeriodo().label}</div></div>
-    <div class="card"><div class="card-label">Produtos</div>
-      <div class="card-value">${_linhas.length}</div></div>
-    <div class="card"><div class="card-label">Total Consumido</div>
-      <div class="card-value red">${totalConsumido}</div></div>
-    <div class="card"><div class="card-label">Total Vendas Reg.</div>
-      <div class="card-value green">${totalVendas}</div></div>
-    <div class="card"><div class="card-label">Divergências (≥${THRESH})</div>
-      <div class="card-value yellow">${alertas}</div></div>
-    <div class="card"><div class="card-label">Estoque não explicado</div>
-      <div class="card-value red">${perdas} un.</div></div>
-  `;
-}
-
-// ============================================================
-// AUDITORIA
-// ============================================================
-function renderAuditoria() {
-  const THRESH = 10;
-  const alertas = _linhas.filter(l => !l.semMapa && l.diferenca > THRESH)
-                         .sort((a,b) => b.diferenca - a.diferenca);
-  const excesso  = _linhas.filter(l => !l.semMapa && l.diferenca < -THRESH)
-                          .sort((a,b) => a.diferenca - b.diferenca);
-  const perdas   = alertas.reduce((s,l) => s + l.diferenca, 0);
-
-  document.getElementById('audit-cards').innerHTML = `
-    <div class="card"><div class="card-label">Alertas de perda</div>
-      <div class="card-value red">${alertas.length}</div></div>
-    <div class="card"><div class="card-label">Excesso vendido</div>
-      <div class="card-value yellow">${excesso.length}</div></div>
-    <div class="card"><div class="card-label">Unidades não explicadas</div>
-      <div class="card-value red">${perdas}</div></div>
-    <div class="card"><div class="card-label">Sem mapeamento</div>
-      <div class="card-value" style="color:var(--muted)">${_linhas.filter(l=>l.semMapa).length}</div></div>
-  `;
-
-  let html = '';
-
-  if (alertas.length > 0) {
-    html += `<div class="audit-block alert-block">
-      <h3>🔴 Produtos com consumo maior que vendas registradas (possível perda, furto ou erro)</h3>`;
-    for (const l of alertas) {
-      const pct = l.consumido > 0 ? ((l.diferenca/l.consumido)*100).toFixed(0) : 0;
-      html += `<p><strong>${l.produto}</strong>: consumiu ${l.consumido} un. do estoque,
-               registrou ${l.vendas} un. vendidas → <strong style="color:var(--red)">${l.diferenca} un. não explicadas (${pct}%)</strong></p>`;
-    }
-    html += `</div>`;
-  }
-
-  if (excesso.length > 0) {
-    html += `<div class="audit-block warn-block">
-      <h3>🟡 Produtos com vendas maiores que consumo de estoque</h3>`;
-    for (const l of excesso) {
-      html += `<p><strong>${l.produto}</strong>: vendeu ${l.vendas} un. mas o estoque só reduziu ${l.consumido} un.
-               → excesso de ${Math.abs(l.diferenca)} un. (pode ter sido reposto no período ou erro de contagem)</p>`;
-    }
-    html += `</div>`;
-  }
-
-  if (alertas.length === 0 && excesso.length === 0) {
-    html += `<div class="audit-block info-block">
-      <h3>✅ Nenhuma divergência significativa detectada</h3>
-      <p>Todos os produtos mapeados estão dentro do limite de ${THRESH} unidades de diferença.</p>
-    </div>`;
-  }
-
-  html += `<div class="audit-block info-block">
-    <h3>ℹ️ Produtos sem mapeamento (${_linhas.filter(l=>l.semMapa).length} itens)</h3>
-    <p>Os seguintes produtos do estoque ainda não têm correspondência no relatório de vendas.
-       Configure o mapeamento na aba <strong>🔗 Mapeamento</strong>.</p>
-    <p style="margin-top:8px">${_linhas.filter(l=>l.semMapa).map(l=>l.produto).join(' · ')}</p>
-  </div>`;
-
-  // Tabela divergências
-  if (alertas.length > 0) {
-    html += `<h2 style="margin-top:20px;margin-bottom:12px">Tabela de Divergências</h2>
-    <div class="table-wrap"><table>
-      <thead><tr>
-        <th>Produto</th>
-        <th class="num">Consumido</th>
-        <th class="num">Vendas Reg.</th>
-        <th class="num">Diferença</th>
-        <th class="num">% Não explicado</th>
-      </tr></thead><tbody>`;
-    for (const l of alertas) {
-      const pct = l.consumido > 0 ? ((l.diferenca/l.consumido)*100).toFixed(1) : '—';
-      html += `<tr>
-        <td>${l.produto}</td>
-        <td class="num">${l.consumido}</td>
-        <td class="num">${l.vendas}</td>
-        <td class="num neg">+${l.diferenca}</td>
-        <td class="num neg">${pct}%</td>
-      </tr>`;
-    }
-    html += `</tbody></table></div>`;
-  }
-
-  document.getElementById('audit-content').innerHTML = html;
-}
-
-// ============================================================
-// MAPEAMENTO UI
-// ============================================================
-function renderMapeamento() {
-  const p = getPeriodo();
-  const produtosEstoque = p.estoque.map(e => e.produto);
-  const materiaisVendas = [...new Set(p.vendas.map(v => v.material.toUpperCase().trim()))].sort();
-
-  let html = '';
-  for (const prod of produtosEstoque) {
-    const tags = (mapeamento[prod] || []);
-    html += `<div class="map-row">
-      <div class="map-produto">${prod}</div>
-      <div class="map-vendas">
-        <div class="tag-list" id="tags-${encodeURIComponent(prod)}">
-          ${tags.map(t => `<span class="tag">${t}<span class="rm" onclick="removeTag('${prod}','${t}')">✕</span></span>`).join('')}
-          <input class="tag-input" placeholder="+ adicionar..."
-                 list="vendas-list"
-                 onkeydown="addTag(event,'${prod.replace(/'/g,"\\'")}')"
-                 style="display:${tags.length < 5 ? 'block' : 'none'}">
-        </div>
-      </div>
-    </div>`;
-  }
-
-  // datalist com opções de vendas
-  html += `<datalist id="vendas-list">` +
-    materiaisVendas.map(m => `<option value="${m}">`).join('') +
-    `</datalist>`;
-
-  document.getElementById('map-list').innerHTML = html;
-}
-
-function removeTag(prod, tag) {
-  if (!mapeamento[prod]) return;
-  mapeamento[prod] = mapeamento[prod].filter(t => t !== tag);
-  renderMapeamento();
-}
-
-function addTag(event, prod) {
-  if (event.key !== 'Enter') return;
-  const input = event.target;
-  const val   = input.value.toUpperCase().trim();
-  if (!val) return;
-  if (!mapeamento[prod]) mapeamento[prod] = [];
-  if (!mapeamento[prod].includes(val)) mapeamento[prod].push(val);
-  input.value = '';
-  renderMapeamento();
-}
-
-function salvarMapeamento() {
-  db.mapeamento = mapeamento;
-  salvarDB();
-  _linhas = calcularLinhas();
-  renderTudo();
-  toast('Mapeamento salvo!');
-}
-
-function resetarMapeamento() {
-  if (!confirm('Restaurar mapeamento padrão?')) return;
-  mapeamento = JSON.parse(JSON.stringify(MAPEAMENTO_PADRAO));
-  db.mapeamento = mapeamento;
-  salvarDB();
-  renderMapeamento();
-  _linhas = calcularLinhas();
-  renderTudo();
-}
-
-// ============================================================
-// PERÍODOS
-// ============================================================
-function renderPeriodsTab() {
-  const lista = db.periodos.map((p, i) => `
-    <div class="periodo-chip ${i===periodoAtivo?'active-chip':''}">
-      📅 ${p.label}
-      ${i > 0 ? `<span style="cursor:pointer;color:var(--muted)" onclick="deletarPeriodo(${i})">✕</span>` : ''}
-    </div>
-  `).join('');
-  document.getElementById('periodos-armazenados').innerHTML = `
-    <div class="periodos-list">${lista}</div>
-  `;
-}
-
-function deletarPeriodo(i) {
-  if (!confirm('Remover este período?')) return;
-  db.periodos.splice(i, 1);
-  if (periodoAtivo >= db.periodos.length) periodoAtivo = 0;
-  salvarDB();
-  renderPeriodoSelect();
-  renderTudo();
-}
-
-function importarPeriodo(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    try {
-      const json = JSON.parse(e.target.result);
-      if (!json.estoque || !json.vendas) throw new Error('Formato inválido');
-      db.periodos.push({
-        label:      json.periodo || file.name,
-        gerado_em:  json.gerado_em || new Date().toISOString().split('T')[0],
-        estoque:    json.estoque,
-        vendas:     json.vendas
-      });
-      periodoAtivo = db.periodos.length - 1;
-      salvarDB();
-      renderPeriodoSelect();
-      renderTudo();
-      toast('Período importado!');
-    } catch(err) {
-      alert('Erro ao importar: ' + err.message);
-    }
-  };
-  reader.readAsText(file, 'utf-8');
-  event.target.value = '';
-}
-
-// ============================================================
-// EXPORT
-// ============================================================
-function exportarCSV() {
-  const header = 'Produto,Inicial,Final,Variação,Vendas Reg.,Diferença\n';
-  const rows   = _linhas.map(l =>
-    `"${l.produto}",${l.inicial},${l.final},${l.variacao},${l.semMapa?'':l.vendas},${l.semMapa?'':l.diferenca}`
-  ).join('\n');
-  const blob = new Blob([header+rows], {type:'text/csv;charset=utf-8'});
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `cultural_${getPeriodo().label.replace(/\//g,'-')}.csv`;
+  a.download = 'estoque_export.csv';
   a.click();
 }
 
-// ============================================================
-// TABS
-// ============================================================
+// ─── TABS ─────────────────────────────────────────────────────────────────────
 function showTab(tab) {
-  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('tab-' + tab).classList.add('active');
-  event.target.classList.add('active');
-  if (tab === 'auditoria')  renderAuditoria();
-  if (tab === 'mapeamento') renderMapeamento();
-  if (tab === 'periodos')   renderPeriodsTab();
+  document.getElementById('tab-estoque').style.display  = tab === 'estoque'   ? '' : 'none';
+  document.getElementById('tab-auditoria').style.display = tab === 'auditoria' ? '' : 'none';
+  document.querySelectorAll('.main-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.main-tab').forEach(b => {
+    if (b.textContent.includes(tab === 'estoque' ? 'Estoque' : 'Auditoria')) b.classList.add('active');
+  });
+  if (tab === 'auditoria') renderAudit();
 }
 
-// ============================================================
-// RENDER TUDO
-// ============================================================
-function renderTudo() {
-  _linhas = calcularLinhas();
-  document.getElementById('periodo-badge').textContent = getPeriodo().label;
-  renderCards();
-  renderTabela();
-  renderPeriodoSelect();
+// ─── AUDITORIA ────────────────────────────────────────────────────────────────
+function renderAudit() {
+  const estoque = [
+    // [produto, ini06, fin06, ini07, fin07, preco_aprox]
+    ['Eisen Pilsen',    976,500, 816,539, 14],
+    ['Heineken',        795,491, 723,588, 20],
+    ['Amstel',          156, 86,  72,  0, 14],
+    ['Praya',            20, 13,  16, 12, 19],
+    ['Heineken Zero',    88, 88,  88, 85, 20],
+    ['Unfiltered',       65, 38,  38, 38, 14],
+    ['Session',           0,  0,   0,  0, 19],
+    ['IPA',              69, 62,  62, 62, 19],
+    ['Pale Ale',         63, 63,  63, 62, 19],
+    ['Lagunitas',        21,  5,   5,  5, 25],
+    ['Sol',             236,191, 191,191, 16],
+    ['Sol Zero',         45, 45,  45, 45, 16],
+    ['Blue Moon',         6,  1,   1,  0, 25],
+    ['Águas',           112, 76, 136, 60,  6],
+    ['Água c/ gás',     127, 58, 118, 83,  8],
+    ['Red Bull',         86, 64,  64, 62, 25],
+    ['Red Bull Tropical',32, 28,  28, 25, 25],
+    ['Monster Normal',   29, 21,  21, 20, 25],
+    ['Monster Ultra',    15,  1,   1,  0, 25],
+    ['Monster Zero',     19, 18,  18, 18, 25],
+    ['Monster Mango',    12, 14,  14, 14, 25],
+    ['Monster Mango Zero',10, 7,   7,  7, 25],
+    ['Monster Pipeline',  9,  8,   8,  8, 25],
+    ['Xeque Mate',      128, 28,  28, 24, 25],
+  ];
+  const vendas06 = {
+    'Eisen Pilsen':474,'Heineken':242,'Amstel':54,'Praya':15,'Heineken Zero':1,
+    'Unfiltered':12,'Session':2,'IPA':20,'Lagunitas':12,'Sol':31,'Sol Zero':4,
+    'Blue Moon':9,'Águas':211,'Água c/ gás':88,'Red Bull':22,'Monster Normal':27,
+    'Monster Ultra':1,'Monster Zero':7,'Xeque Mate':133
+  };
+  const vendas07 = {
+    'Eisen Pilsen':201,'Heineken':57,'Amstel':18,'Praya':4,'Heineken Zero':3,
+    'Unfiltered':9,'Session':1,'IPA':12,'Pale Ale':3,'Sol':5,'Sol Zero':2,
+    'Blue Moon':2,'Águas':59,'Água c/ gás':11,'Red Bull':7,'Monster Normal':7,
+    'Monster Ultra':2,'Monster Zero':2,'Monster Pipeline':1,'Xeque Mate':33
+  };
+
+  let rows = [];
+  let totalFuga = 0, totalFantasma = 0, totalOk = 0;
+
+  estoque.forEach(([p, i06, f06, i07, f07, preco]) => {
+    const var06 = f06 - i06;
+    const var07 = f07 - i07;
+    const v06 = vendas06[p] || 0;
+    const v07 = vendas07[p] || 0;
+    const dif06 = v06 + var06; // positivo = vendeu mais que baixou; negativo = baixou mais que vendeu
+    const dif07 = v07 + var07;
+    const difTotal = dif06 + dif07;
+    const perdaEst = Math.abs(Math.min(0, dif06) + Math.min(0, dif07)) * preco;
+    const tipo = difTotal < -5 ? 'fuga' : difTotal > 5 ? 'fantasma' : 'ok';
+    if (tipo === 'fuga')     totalFuga++;
+    else if (tipo === 'fantasma') totalFantasma++;
+    else totalOk++;
+    rows.push({p, var06, var07, v06, v07, dif06, dif07, difTotal, perdaEst, preco, tipo});
+  });
+
+  rows.sort((a,b) => Math.abs(b.difTotal) - Math.abs(a.difTotal));
+
+  const totalPerdaFuga = rows.filter(r=>r.tipo==='fuga').reduce((s,r)=>s+r.perdaEst,0);
+
+  const cont = document.getElementById('audit-body');
+  cont.innerHTML = '';
+
+  // Cards de resumo
+  document.getElementById('a-fuga').textContent = totalFuga;
+  document.getElementById('a-fantasma').textContent = totalFantasma;
+  document.getElementById('a-ok').textContent = totalOk;
+  document.getElementById('a-perda').textContent = 'R$ ' + totalPerdaFuga.toLocaleString('pt-BR', {minimumFractionDigits:0, maximumFractionDigits:0});
+
+  // Linhas
+  rows.forEach(r => {
+    if (r.tipo === 'ok' && r.v06 === 0 && r.v07 === 0) return;
+    const rowClass = r.tipo === 'fuga' ? 'row-danger' : r.tipo === 'fantasma' ? 'row-warn' : '';
+    const badge = r.tipo === 'fuga'
+      ? '<span class="badge badge-danger">Saída s/ registro</span>'
+      : r.tipo === 'fantasma'
+      ? '<span class="badge badge-warn">Venda > estoque</span>'
+      : '<span class="badge badge-ok">OK</span>';
+    const d06class = r.dif06 < -3 ? 'diff-neg' : r.dif06 > 3 ? 'diff-pos' : 'diff-ok';
+    const d07class = r.dif07 < -3 ? 'diff-neg' : r.dif07 > 3 ? 'diff-pos' : 'diff-ok';
+    const dtclass  = r.difTotal < -5 ? 'diff-neg' : r.difTotal > 5 ? 'diff-pos' : 'diff-ok';
+    const perda = r.perdaEst > 0 ? `R$ ${r.perdaEst.toLocaleString('pt-BR',{minimumFractionDigits:0})}` : '—';
+    cont.innerHTML += `
+      <tr class="${rowClass}">
+        <td><strong>${r.p}</strong></td>
+        <td class="num">${r.var06}</td><td class="num">${r.v06}</td><td class="num ${d06class}">${r.dif06>0?'+':''}${r.dif06}</td>
+        <td class="num">${r.var07}</td><td class="num">${r.v07}</td><td class="num ${d07class}">${r.dif07>0?'+':''}${r.dif07}</td>
+        <td class="num ${dtclass}"><strong>${r.difTotal>0?'+':''}${r.difTotal}</strong></td>
+        <td class="num">${perda}</td>
+        <td>${badge}</td>
+      </tr>`;
+  });
 }
 
-// ============================================================
-// TOAST
-// ============================================================
-function toast(msg) {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 2500);
-}
-
-// ============================================================
-// START
-// ============================================================
 init();
 </script>
+
+</div><!-- /tab-estoque -->
+
+<!-- ── ABA AUDITORIA ── -->
+<div id="tab-auditoria" style="display:none">
+<div class="audit-container">
+
+  <div class="audit-section">
+    <div class="audit-section-title">🔍 Resumo de divergências — 06 e 07/06/2026</div>
+    <div class="audit-cards">
+      <div class="audit-card red">
+        <div class="audit-card-label">Saída sem registro</div>
+        <div class="audit-card-value" id="a-fuga">—</div>
+        <div style="font-size:0.72rem;color:#888;margin-top:4px">estoque baixou > vendas</div>
+      </div>
+      <div class="audit-card amber">
+        <div class="audit-card-label">Venda > estoque baixou</div>
+        <div class="audit-card-value" id="a-fantasma">—</div>
+        <div style="font-size:0.72rem;color:#888;margin-top:4px">possível substituição de produto</div>
+      </div>
+      <div class="audit-card green">
+        <div class="audit-card-label">Sem divergência</div>
+        <div class="audit-card-value" id="a-ok">—</div>
+        <div style="font-size:0.72rem;color:#888;margin-top:4px">venda ≈ variação estoque</div>
+      </div>
+      <div class="audit-card red">
+        <div class="audit-card-label">Impacto estimado (fuga)</div>
+        <div class="audit-card-value" id="a-perda">—</div>
+        <div style="font-size:0.72rem;color:#888;margin-top:4px">unidades × preço unitário</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="audit-section">
+    <div class="audit-section-title">🧠 Análise interpretativa</div>
+
+    <div style="background:#fff8e1;border-left:4px solid #e67e22;border-radius:0 8px 8px 0;padding:16px 20px;margin-bottom:14px">
+      <div style="font-size:0.78rem;font-weight:700;color:#b7770d;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">⚠️ Indício de substituição de produto — IPA e Xeque Mate</div>
+      <p style="font-size:0.88rem;color:#555;line-height:1.7;margin:0">
+        O produto <strong>IPA</strong> apresenta 32 vendas registradas nos dois dias, mas o estoque caiu apenas 7 unidades — uma discrepância de +25. Isso significa que em média a cada 4 IPAs cobrados no sistema, apenas 1 saiu fisicamente do estoque. O cenário mais provável é que o funcionário esteja registrando IPA (R$19) no sistema e entregando Eisen Pilsen (R$14) ao cliente, embolsando ou desviando a diferença de R$5 por unidade.
+        O <strong>Xeque Mate</strong> apresenta o padrão mais grave: 166 vendas registradas em dois dias, mas apenas 104 unidades saíram do estoque — sobra de +62 vendas sem lastro físico. No dia 07, foram registradas 33 vendas com apenas 4 unidades saindo do estoque. Isso sugere lançamento sistemático de vendas que não correspondem à entrega real, possivelmente como mecanismo para justificar diferenças de caixa ou desviar valores.
+      </p>
+    </div>
+
+    <div style="background:#fdecea;border-left:4px solid #e74c3c;border-radius:0 8px 8px 0;padding:16px 20px;margin-bottom:14px">
+      <div style="font-size:0.78rem;font-weight:700;color:#a93226;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">🚨 Indício de consumo ou saída não registrada — Heineken e Amstel</div>
+      <p style="font-size:0.88rem;color:#555;line-height:1.7;margin:0">
+        A <strong>Heineken</strong> apresenta saída de 140 unidades acima do total vendido nos dois dias (−62 no D6 e −78 no D7), com o gap crescendo de um dia para o outro. A preço médio de R$20 por unidade, isso representa aproximadamente <strong>R$2.800 em produto saindo sem registro</strong> em apenas dois dias. O crescimento do desvio entre os dias sugere que não é erro de contagem — é um padrão que se repete e se intensifica.
+        O <strong>Amstel</strong> segue o mesmo padrão com agravante: no dia 07, o estoque foi de 72 para zero, mas apenas 18 unidades foram vendidas — 54 unidades sem registro em um único dia. Ou houve consumo interno em larga escala, ou as garrafas estão saindo sem passar pelo sistema.
+      </p>
+    </div>
+
+    <div style="background:#fef9f0;border-left:4px solid #f39c12;border-radius:0 8px 8px 0;padding:16px 20px;margin-bottom:14px">
+      <div style="font-size:0.78rem;font-weight:700;color:#9a6a00;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">⚡ Indício de troca entre variantes — Monster Ultra vs Monster Normal</div>
+      <p style="font-size:0.88rem;color:#555;line-height:1.7;margin:0">
+        O <strong>Monster Ultra</strong> teve 14 unidades removidas do estoque no dia 06 com apenas 1 venda registrada — 13 unidades desaparecidas sem lançamento. No mesmo dia, o <strong>Monster Normal</strong> teve 27 vendas registradas mas apenas 8 unidades saíram do estoque. O padrão sugere que Monster Ultra está sendo entregue fisicamente enquanto Monster Normal é lançado no sistema, ou vice-versa. Como ambos têm o mesmo preço (R$25), o motivo aqui pode ser simplesmente descuido operacional ou confusão entre variantes pelo funcionário.
+      </p>
+    </div>
+
+    <div style="background:#eaf6fb;border-left:4px solid #2980b9;border-radius:0 8px 8px 0;padding:16px 20px;margin-bottom:20px">
+      <div style="font-size:0.78rem;font-weight:700;color:#1a5276;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">ℹ️ Observação sobre Águas — provável diferença de unidade de medida</div>
+      <p style="font-size:0.88rem;color:#555;line-height:1.7;margin:0">
+        A <strong>Água sem gás</strong> apresenta divergência extrema no dia 06 (211 vendidas, apenas 36 saíram do estoque), mas no dia 07 o comportamento inverte (59 vendidas, 76 saíram). Essa oscilação nos dois sentidos indica que provavelmente a contagem de estoque é feita em <strong>caixas ou fardos</strong> enquanto as vendas são registradas em <strong>unidades individuais</strong>. Recomenda-se alinhar a unidade de medida entre o sistema de vendas e a planilha de contagem antes de incluir este item na análise de auditoria.
+      </p>
+    </div>
+  </div>
+
+  <div class="audit-section">
+    <div class="audit-section-title">📋 Divergência por produto</div>
+    <p style="font-size:0.82rem;color:#777;margin-bottom:14px">
+      <strong>Dif =</strong> vendas + variação estoque.
+      <span style="color:#e74c3c">Negativo</span> = estoque baixou mais que as vendas (saída sem registro).
+      <span style="color:#e67e22">Positivo</span> = vendas registradas superam a queda do estoque (possível substituição).
+    </p>
+    <table class="audit-table">
+      <thead>
+        <tr>
+          <th>Produto</th>
+          <th class="num">Var D6</th><th class="num">Vnd D6</th><th class="num">Dif D6</th>
+          <th class="num">Var D7</th><th class="num">Vnd D7</th><th class="num">Dif D7</th>
+          <th class="num">Total</th>
+          <th class="num">Impacto R$</th>
+          <th>Tipo</th>
+        </tr>
+      </thead>
+      <tbody id="audit-body"></tbody>
+    </table>
+  </div>
+
+  <div class="audit-section">
+    <div class="audit-section-title">⚠️ Hipóteses de substituição identificadas</div>
+    <table class="audit-table">
+      <thead>
+        <tr><th>Registrado no sistema</th><th>Possivelmente entregue</th><th>Evidência</th><th>Risco</th></tr>
+      </thead>
+      <tbody>
+        <tr class="row-warn">
+          <td><strong>IPA</strong> (R$19)</td>
+          <td><strong>Eisen Pilsen</strong> (R$14)</td>
+          <td style="font-size:0.82rem;color:#555">IPA: 32 vendas, estoque caiu apenas 7. Pilsen cai mais que o vendido nos 2 dias.</td>
+          <td><span class="badge badge-danger">Alta</span></td>
+        </tr>
+        <tr class="row-warn">
+          <td><strong>Xeque Mate</strong> (R$25)</td>
+          <td><strong>outro produto</strong></td>
+          <td style="font-size:0.82rem;color:#555">166 vendas registradas, estoque caiu apenas 104. +62 unidades cobradas sem sair do estoque.</td>
+          <td><span class="badge badge-danger">Alta</span></td>
+        </tr>
+        <tr class="row-warn">
+          <td><strong>Monster Normal</strong> (R$25)</td>
+          <td><strong>Monster Ultra</strong> (R$25)</td>
+          <td style="font-size:0.82rem;color:#555">Monster Ultra: -14 no estoque D6, apenas 1 vendido. Monster Normal: vendeu 34, estoque caiu 9.</td>
+          <td><span class="badge badge-warn">Média</span></td>
+        </tr>
+        <tr>
+          <td><strong>Heineken</strong> (R$20)</td>
+          <td><strong>saída não registrada</strong></td>
+          <td style="font-size:0.82rem;color:#555">140 unidades a mais saíram do que foram vendidas nos 2 dias. Padrão consistente e crescente.</td>
+          <td><span class="badge badge-danger">Alta</span></td>
+        </tr>
+        <tr>
+          <td><strong>Amstel</strong> (R$14)</td>
+          <td><strong>saída não registrada</strong></td>
+          <td style="font-size:0.82rem;color:#555">Piora de D6 (-16) para D7 (-54). 72→0 no estoque com apenas 18 vendidas no D7.</td>
+          <td><span class="badge badge-danger">Alta</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+</div>
+
+
 </body>
 </html>
