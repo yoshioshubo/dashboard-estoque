@@ -813,12 +813,9 @@ function parseSheetCSV(text) {
     const c    = parseLine(l);
     const nome = c[pi]?.trim();
     if (!nome) return null;
-    const estoque   = ei >= 0 ? (parseFloat(c[ei]) || 0) : 0;
-    const contagem  = ci >= 0 ? (parseFloat(c[ci]) || 0) : 0;
-    // Usa Contagem se preenchida, senão Estoque
-    const qtde = contagem > 0 ? contagem : estoque;
-    const saidas = si >= 0 ? (parseFloat(c[si]) || 0) : 0;
-    return { produto: nome, estoque: qtde, saidas };
+    const estoque = ei >= 0 ? (parseFloat(c[ei]) || 0) : 0;
+    const saidas  = si >= 0 ? (parseFloat(c[si]) || 0) : 0;
+    return { produto: nome, estoque, saidas };
   }).filter(Boolean);
 }
 
