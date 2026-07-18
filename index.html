@@ -514,21 +514,22 @@
 
 <!-- ─── CONFIG PANEL ──────────────────────────────────────────────── -->
 <div id="config-panel" class="config-panel" style="display:none">
-  <strong>Configurar Google Apps Script</strong>
-  <p>Cole a URL gerada após o deploy do arquivo <code>gas_estoque.gs</code>.</p>
-  <div class="config-row">
-    <input id="gas-url-input" class="config-input" type="text" placeholder="https://script.google.com/macros/s/.../exec">
-    <button class="config-save-btn" onclick="saveGASURL()">Salvar</button>
-    <button class="config-cancel-btn" onclick="toggleConfig()">Cancelar</button>
-  </div>
+  <strong>Como habilitar a importação automática</strong>
+  <p>O dashboard lê a planilha diretamente — basta torná-la pública (somente leitura):</p>
   <div class="gas-instructions">
     <ol>
-      <li>Abra <a href="https://script.google.com" target="_blank">script.google.com</a> → <strong>Novo projeto</strong></li>
-      <li>Cole o conteúdo do arquivo <code>gas_estoque.gs</code> e salve</li>
-      <li>Clique em <strong>Implantar → Nova implantação</strong></li>
-      <li>Tipo: <code>App da Web</code> · Executar como: <code>Eu</code> · Acesso: <code>Qualquer pessoa</code></li>
-      <li>Autorize → copie a URL → cole aqui acima</li>
+      <li>Abra a planilha → clique em <strong>Compartilhar</strong> (canto superior direito)</li>
+      <li>Em "Acesso geral" mude de <strong>Restrito</strong> para <strong>Qualquer pessoa com o link</strong></li>
+      <li>Permissão: <strong>Leitor</strong> (não Editor)</li>
+      <li>Clique em <strong>Concluído</strong></li>
     </ol>
+    <div style="margin-top:10px">
+      <a href="https://docs.google.com/spreadsheets/d/1NPZBgdrulzSbgxkF0_NNegUtidbDm6B4zkXoNl6aN7Q/edit#sharing" target="_blank" style="color:#4a90e2;font-weight:600">→ Abrir configurações de compartilhamento da planilha</a>
+    </div>
+  </div>
+  <div style="margin-top:10px">
+    <button class="config-cancel-btn" onclick="toggleConfig()">Fechar</button>
+    <button class="config-save-btn" style="margin-left:8px" onclick="localStorage.removeItem('sheetTabs');toggleConfig();alert('Lista de abas atualizada. Tente importar novamente.')">🔄 Forçar atualização das abas</button>
   </div>
 </div>
 
@@ -741,56 +742,150 @@ function reinitFilters() {
   }
 }
 
-// ─── IMPORTAÇÃO: MODAL ───────────────────────────────────────────────────────
+// ─── IMPORTAÇÃO: CSV DIRETO ──────────────────────────────────────────────────
+const SHEET_ID  = '1NPZBgdrulzSbgxkF0_NNegUtidbDm6B4zkXoNl6aN7Q';
+const SHARE_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit#sharing`;
+
+function csvUrl(sheetName) {
+  return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&sheet=${encodeURIComponent(sheetName)}`;
+}
+
+// Testa se a planilha está pública tentando buscar uma aba conhecida
+async function checkSheetPublic() {
+  try {
+    const resp = await fetch(csvUrl('MODELO'), { signal: AbortSignal.timeout(6000) });
+    return resp.ok;
+  } catch { return false; }
+}
+
+// Descobre abas existentes testando padrões de data do mês atual e anteriores
+async function discoverTabs() {
+  // Gera candidatos DDMMYY e "Cont DDMMYY" para os últimos 120 dias
+  const today = new Date();
+  const candidates = [];
+  for (let i = 0; i < 120; i++) {
+    const d  = new Date(today); d.setDate(d.getDate() - i);
+    const dd = String(d.getDate()).padStart(2,'0');
+    const mm = String(d.getMonth()+1).padStart(2,'0');
+    const yy = String(d.getFullYear()).slice(2);
+    candidates.push(`${dd}${mm}${yy}`);
+    candidates.push(`Cont ${dd}${mm}${yy}`);
+  }
+
+  const found = [];
+  // Verifica em lotes paralelos de 8
+  for (let i = 0; i < candidates.length; i += 8) {
+    const batch = candidates.slice(i, i + 8);
+    const results = await Promise.all(batch.map(async name => {
+      try {
+        const resp = await fetch(csvUrl(name), { signal: AbortSignal.timeout(4000) });
+        if (!resp.ok) return null;
+        const txt = await resp.text();
+        // Aba válida tem cabeçalho com vírgulas e pelo menos uma linha de dados
+        return txt.split('\n').length > 2 ? name : null;
+      } catch { return null; }
+    }));
+    found.push(...results.filter(Boolean));
+  }
+  return found.filter(n => !SKIP_TABS.includes(n));
+}
+
+// Parse CSV → [{produto, estoque, saidas}]
+function parseSheetCSV(text) {
+  const lines = text.trim().split('\n');
+  if (lines.length < 2) return [];
+  function parseLine(line) {
+    const r = []; let cur = '', inQ = false;
+    for (const ch of line + ',') {
+      if (ch === '"') inQ = !inQ;
+      else if (ch === ',' && !inQ) { r.push(cur.trim()); cur = ''; }
+      else cur += ch;
+    }
+    return r;
+  }
+  const headers = parseLine(lines[0]).map(h => h.toLowerCase().trim());
+  const pi = headers.findIndex(h => h.startsWith('produto'));
+  const ei = headers.findIndex(h => h === 'estoque');
+  const si = headers.findIndex(h => h.includes('saída') || h.includes('saida'));
+  if (pi === -1) return [];
+  return lines.slice(1).map(l => {
+    const c = parseLine(l);
+    const nome = c[pi]?.trim();
+    if (!nome) return null;
+    return { produto: nome, estoque: ei >= 0 ? (parseFloat(c[ei]) || 0) : 0, saidas: si >= 0 ? (parseFloat(c[si]) || 0) : 0 };
+  }).filter(Boolean);
+}
+
+// ─── MODAL ───────────────────────────────────────────────────────────────────
 let _importType = null;
 
 async function openImportModal(type) {
   _importType = type;
   const titles = { inicial: '📋 Estoque Inicial', final: '📋 Estoque Final', vendas: '💰 Vendas' };
   document.getElementById('modal-title').textContent    = titles[type];
-  document.getElementById('modal-subtitle').textContent = 'Selecione a aba da planilha (= data da contagem):';
+  document.getElementById('modal-subtitle').textContent = 'Selecione a data da contagem:';
   document.getElementById('modal-tabs-list').innerHTML  =
-    '<div style="text-align:center;padding:24px;color:#aaa">⏳ Carregando abas...</div>';
+    '<div style="text-align:center;padding:24px;color:#aaa">⏳ Verificando acesso à planilha...</div>';
   document.getElementById('import-modal').style.display = 'flex';
 
-  try {
-    if (!GAS_URL) throw new Error('URL do Apps Script não configurada. Clique em ⚙ para configurar.');
-    const resp = await fetch(`${GAS_URL}?action=listSheets`);
-    if (!resp.ok) throw new Error('Erro HTTP ' + resp.status + '. Verifique a URL do Apps Script.');
-    const data = await resp.json();
-    if (!data.ok) throw new Error(data.error || 'Resposta inválida do Apps Script.');
+  // Verifica acesso
+  const isPublic = await checkSheetPublic();
+  if (!isPublic) {
+    document.getElementById('modal-tabs-list').innerHTML = `
+      <div class="modal-error">
+        A planilha está privada. Para importar automaticamente, compartilhe como <strong>"Qualquer pessoa com o link"</strong> (somente leitura).
+      </div>
+      <div class="modal-hint">
+        <a href="${SHARE_URL}" target="_blank" style="color:#4a90e2;font-weight:600">→ Clique aqui para abrir as configurações de compartilhamento</a>
+        <br><br>
+        Depois de compartilhar, feche este modal e clique novamente no botão de importar.
+      </div>`;
+    return;
+  }
 
-    const tabs = data.sheets.filter(t => !SKIP_TABS.includes(t));
-    if (!tabs.length) {
-      document.getElementById('modal-tabs-list').innerHTML =
-        '<p style="padding:16px;color:#888">Nenhuma aba disponível na planilha.</p>';
-      return;
-    }
-    document.getElementById('modal-tabs-list').innerHTML = tabs.map(tab => {
-      const d    = parseTabDate(tab);
+  // Carrega cache ou descobre abas
+  document.getElementById('modal-tabs-list').innerHTML =
+    '<div style="text-align:center;padding:24px;color:#aaa">⏳ Buscando abas disponíveis...</div>';
+
+  let tabs = JSON.parse(localStorage.getItem('sheetTabs') || 'null');
+  if (!tabs) {
+    tabs = await discoverTabs();
+    if (tabs.length) localStorage.setItem('sheetTabs', JSON.stringify(tabs));
+  }
+
+  if (!tabs.length) {
+    document.getElementById('modal-tabs-list').innerHTML =
+      '<div class="modal-error">Nenhuma aba encontrada na planilha.</div>';
+    return;
+  }
+
+  document.getElementById('modal-tabs-list').innerHTML =
+    tabs.map(tab => {
+      const d = parseTabDate(tab);
       const dStr = d ? ` <small style="color:#888">${fmtDate(d)}</small>` : '';
       return `<button class="modal-tab-btn" onclick="importFromTab('${tab}','${_importType}')">${tab}${dStr}</button>`;
-    }).join('');
+    }).join('') +
+    `<button class="modal-tab-btn" style="color:#888;border-style:dashed;margin-top:8px" onclick="refreshTabList('${type}')">🔄 Atualizar lista de abas</button>`;
+}
 
-  } catch(err) {
-    document.getElementById('modal-tabs-list').innerHTML =
-      `<div class="modal-error">${err.message}</div>
-       <div class="modal-hint">Após configurar o Apps Script, os ciclos serão listados automaticamente.</div>`;
-  }
+async function refreshTabList(type) {
+  localStorage.removeItem('sheetTabs');
+  await openImportModal(type);
 }
 
 async function importFromTab(tabName, type) {
   document.getElementById('modal-tabs-list').innerHTML =
     `<div style="text-align:center;padding:24px;color:#aaa">⏳ Importando "${tabName}"...</div>`;
   try {
-    const resp = await fetch(`${GAS_URL}?action=readSheet&sheet=${encodeURIComponent(tabName)}`);
+    const resp = await fetch(csvUrl(tabName), { signal: AbortSignal.timeout(10000) });
     if (!resp.ok) throw new Error('Erro HTTP ' + resp.status);
-    const data = await resp.json();
-    if (!data.ok) throw new Error(data.error);
+    const text = await resp.text();
+    const produtos = parseSheetCSV(text);
+    if (!produtos.length) throw new Error('Nenhum produto encontrado na aba "' + tabName + '".');
 
-    if (type === 'inicial')  cicloData.estoqueInicial = { tab: tabName, produtos: data.produtos };
-    else if (type === 'final') cicloData.estoqueFinal = { tab: tabName, produtos: data.produtos };
-    else                     cicloData.vendas        = { tab: tabName, produtos: data.produtos };
+    if (type === 'inicial')    cicloData.estoqueInicial = { tab: tabName, produtos };
+    else if (type === 'final') cicloData.estoqueFinal   = { tab: tabName, produtos };
+    else                       cicloData.vendas         = { tab: tabName, produtos };
 
     localStorage.setItem('cicloData', JSON.stringify(cicloData));
     closeImportModal();
@@ -813,23 +908,15 @@ function clearCiclo() {
   if (!confirm('Limpar todos os dados do ciclo atual?')) return;
   cicloData = { estoqueInicial: null, estoqueFinal: null, vendas: null };
   localStorage.setItem('cicloData', JSON.stringify(cicloData));
-  rebuildData();
-  updateCycleStatus();
-  reinitFilters();
-  render();
+  rebuildData(); updateCycleStatus(); reinitFilters(); render();
 }
 
 function toggleConfig() {
   const p = document.getElementById('config-panel');
-  p.style.display = p.style.display === 'none' ? 'block' : 'none';
-  if (p.style.display === 'block') document.getElementById('gas-url-input').value = GAS_URL;
+  p.style.display = p.style.display === 'none' ? '' : 'none';
 }
 
-function saveGASURL() {
-  GAS_URL = document.getElementById('gas-url-input').value.trim();
-  localStorage.setItem('gas_url', GAS_URL);
-  toggleConfig();
-}
+function saveGASURL() { toggleConfig(); } // mantido por compatibilidade
 
 // ─── STATE ───────────────────────────────────────────────────────────────────
 let mode = 'day';
