@@ -669,7 +669,7 @@ function rebuildData() {
 
   // Linhas do estoque inicial
   cicloData.estoqueInicial.produtos.forEach(p => {
-    if (p.estoque > 0) rawData.push([dateIni, p.produto.trim(), p.estoque, p.estoque]);
+    rawData.push([dateIni, p.produto.trim(), p.estoque, p.estoque]);
   });
 
   // Linhas do estoque final (data diferente = nova linha; mesma data = atualiza col[3])
@@ -677,7 +677,7 @@ function rebuildData() {
     const dateFin = parseTabDate(cicloData.estoqueFinal.tab) || dateIni;
     if (dateFin !== dateIni) {
       cicloData.estoqueFinal.produtos.forEach(p => {
-        if (p.estoque > 0) rawData.push([dateFin, p.produto.trim(), p.estoque, p.estoque]);
+        rawData.push([dateFin, p.produto.trim(), p.estoque, p.estoque]);
       });
     } else {
       cicloData.estoqueFinal.produtos.forEach(p => {
@@ -804,15 +804,21 @@ function parseSheetCSV(text) {
     return r;
   }
   const headers = parseLine(lines[0]).map(h => h.toLowerCase().trim());
-  const pi = headers.findIndex(h => h.startsWith('produto'));
-  const ei = headers.findIndex(h => h === 'estoque');
-  const si = headers.findIndex(h => h.includes('saída') || h.includes('saida'));
+  const pi  = headers.findIndex(h => h.startsWith('produto'));
+  const ei  = headers.findIndex(h => h === 'estoque');
+  const ci  = headers.findIndex(h => h === 'contagem');   // coluna preenchida na contagem física
+  const si  = headers.findIndex(h => h.includes('saída') || h.includes('saida'));
   if (pi === -1) return [];
   return lines.slice(1).map(l => {
-    const c = parseLine(l);
+    const c    = parseLine(l);
     const nome = c[pi]?.trim();
     if (!nome) return null;
-    return { produto: nome, estoque: ei >= 0 ? (parseFloat(c[ei]) || 0) : 0, saidas: si >= 0 ? (parseFloat(c[si]) || 0) : 0 };
+    const estoque   = ei >= 0 ? (parseFloat(c[ei]) || 0) : 0;
+    const contagem  = ci >= 0 ? (parseFloat(c[ci]) || 0) : 0;
+    // Usa Contagem se preenchida, senão Estoque
+    const qtde = contagem > 0 ? contagem : estoque;
+    const saidas = si >= 0 ? (parseFloat(c[si]) || 0) : 0;
+    return { produto: nome, estoque: qtde, saidas };
   }).filter(Boolean);
 }
 
