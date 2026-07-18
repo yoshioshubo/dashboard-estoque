@@ -310,6 +310,183 @@
   .diff-neg { color: #e74c3c; font-weight: 700; }
   .diff-pos { color: #e67e22; font-weight: 700; }
   .diff-ok  { color: #27ae60; font-weight: 700; }
+
+  /* ── Painel de importação ── */
+  .import-panel {
+    background: #0f3460;
+    padding: 12px 30px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    border-bottom: 2px solid #16213e;
+  }
+  .import-status-text {
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.6);
+    flex: 1;
+    min-width: 200px;
+    font-family: 'Segoe UI', Arial, sans-serif;
+  }
+  .import-status-text strong { color: rgba(255,255,255,0.9); }
+  .import-buttons-group { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .import-btn {
+    padding: 7px 14px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 600;
+    transition: all 0.18s;
+    white-space: nowrap;
+  }
+  .import-btn.btn-ini  { background: #4a90e2; color: white; }
+  .import-btn.btn-ini:hover  { background: #357abd; }
+  .import-btn.btn-fin  { background: #27ae60; color: white; }
+  .import-btn.btn-fin:hover  { background: #1e8449; }
+  .import-btn.btn-vnd  { background: #9b59b6; color: white; }
+  .import-btn.btn-vnd:hover  { background: #7d3c98; }
+  .import-btn.btn-clr  { background: transparent; color: rgba(255,255,255,0.55); border: 1px solid rgba(255,255,255,0.25); font-size: 0.75rem; }
+  .import-btn.btn-clr:hover  { background: rgba(255,255,255,0.1); color: white; }
+  .import-btn.btn-cfg  { background: transparent; color: rgba(255,255,255,0.55); border: 1px solid rgba(255,255,255,0.25); font-size: 0.88rem; padding: 7px 10px; }
+  .import-btn.btn-cfg:hover  { background: rgba(255,255,255,0.1); color: white; }
+  .import-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* ── Config panel ── */
+  .config-panel {
+    background: #16213e;
+    padding: 14px 30px;
+    border-bottom: 1px solid #0f3460;
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.8);
+  }
+  .config-panel strong { color: white; }
+  .config-panel p { margin: 6px 0 10px; color: rgba(255,255,255,0.6); font-size: 0.82rem; }
+  .config-panel a { color: #4a90e2; }
+  .config-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .config-input {
+    flex: 1;
+    min-width: 300px;
+    padding: 7px 12px;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 6px;
+    background: rgba(255,255,255,0.08);
+    color: white;
+    font-size: 0.82rem;
+  }
+  .config-input::placeholder { color: rgba(255,255,255,0.35); }
+  .config-save-btn {
+    padding: 7px 16px;
+    background: #4a90e2;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 600;
+  }
+  .config-save-btn:hover { background: #357abd; }
+  .config-cancel-btn {
+    padding: 7px 12px;
+    background: transparent;
+    color: rgba(255,255,255,0.5);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.82rem;
+  }
+  .gas-instructions {
+    margin-top: 12px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 6px;
+    padding: 12px 14px;
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.65);
+    line-height: 1.7;
+  }
+  .gas-instructions ol { padding-left: 18px; }
+  .gas-instructions code {
+    background: rgba(255,255,255,0.12);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-family: monospace;
+  }
+
+  /* ── Modal ── */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000;
+  }
+  .modal-box {
+    background: white;
+    border-radius: 12px;
+    width: 420px;
+    max-width: 95vw;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+    overflow: hidden;
+  }
+  .modal-header {
+    background: #1a1a2e;
+    color: white;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .modal-header h3 { font-size: 1rem; font-weight: 600; }
+  .modal-close {
+    background: none; border: none; color: rgba(255,255,255,0.6);
+    cursor: pointer; font-size: 1.1rem; padding: 0; line-height: 1;
+  }
+  .modal-close:hover { color: white; }
+  .modal-subtitle {
+    padding: 12px 20px 8px;
+    font-size: 0.82rem;
+    color: #666;
+    border-bottom: 1px solid #f0f0f0;
+    margin: 0;
+  }
+  .modal-tabs-list {
+    overflow-y: auto;
+    flex: 1;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .modal-tab-btn {
+    width: 100%;
+    text-align: left;
+    padding: 12px 16px;
+    background: #f7f9fc;
+    border: 1px solid #e8e8e8;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.88rem;
+    color: #333;
+    font-weight: 500;
+    transition: all 0.15s;
+  }
+  .modal-tab-btn:hover { background: #e8f0fe; border-color: #4a90e2; color: #1a5c9e; }
+  .modal-error {
+    padding: 16px;
+    color: #c0392b;
+    font-size: 0.85rem;
+    background: #fde8e8;
+    border-radius: 8px;
+    margin: 8px;
+  }
+  .modal-hint {
+    padding: 0 16px 16px;
+    font-size: 0.78rem;
+    color: #888;
+    line-height: 1.5;
+  }
 </style>
 </head>
 <body>
@@ -320,6 +497,54 @@
     <span>Contagem diária · Clique em "Itens Vendidos" para editar</span>
   </div>
 </header>
+
+<!-- ─── IMPORT PANEL ─────────────────────────────────────────────── -->
+<div class="import-panel">
+  <div class="import-status-text" id="cycle-status-text">
+    <strong>Ciclo:</strong> nenhum dado importado
+  </div>
+  <div class="import-buttons-group">
+    <button class="import-btn btn-ini" onclick="openImportModal('inicial')">📋 Importar Estoque Inicial</button>
+    <button class="import-btn btn-fin" onclick="openImportModal('final')">📋 Importar Estoque Final</button>
+    <button class="import-btn btn-vnd" onclick="openImportModal('vendas')">💰 Importar Vendas</button>
+    <button class="import-btn btn-clr" onclick="clearCiclo()">🗑 Limpar Ciclo</button>
+    <button class="import-btn btn-cfg" onclick="toggleConfig()" title="Configurar Google Apps Script">⚙</button>
+  </div>
+</div>
+
+<!-- ─── CONFIG PANEL ──────────────────────────────────────────────── -->
+<div id="config-panel" class="config-panel" style="display:none">
+  <strong>Configurar Google Apps Script</strong>
+  <p>Cole a URL gerada após o deploy do arquivo <code>gas_estoque.gs</code>.</p>
+  <div class="config-row">
+    <input id="gas-url-input" class="config-input" type="text" placeholder="https://script.google.com/macros/s/.../exec">
+    <button class="config-save-btn" onclick="saveGASURL()">Salvar</button>
+    <button class="config-cancel-btn" onclick="toggleConfig()">Cancelar</button>
+  </div>
+  <div class="gas-instructions">
+    <ol>
+      <li>Abra <a href="https://script.google.com" target="_blank">script.google.com</a> → <strong>Novo projeto</strong></li>
+      <li>Cole o conteúdo do arquivo <code>gas_estoque.gs</code> e salve</li>
+      <li>Clique em <strong>Implantar → Nova implantação</strong></li>
+      <li>Tipo: <code>App da Web</code> · Executar como: <code>Eu</code> · Acesso: <code>Qualquer pessoa</code></li>
+      <li>Autorize → copie a URL → cole aqui acima</li>
+    </ol>
+  </div>
+</div>
+
+<!-- ─── IMPORT MODAL ──────────────────────────────────────────────── -->
+<div id="import-modal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeImportModal()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="modal-title">Selecionar Aba</h3>
+      <button class="modal-close" onclick="closeImportModal()">✕</button>
+    </div>
+    <p class="modal-subtitle" id="modal-subtitle">Escolha a data da contagem:</p>
+    <div id="modal-tabs-list" class="modal-tabs-list">
+      <div style="text-align:center;padding:24px;color:#aaa">⏳ Carregando...</div>
+    </div>
+  </div>
+</div>
 
 <div class="main-tabs">
   <button class="main-tab active" onclick="showTab('estoque')">📊 Estoque</button>
@@ -410,14 +635,201 @@
 </div>
 
 <script>
-// ─── RAW DATA ────────────────────────────────────────────────────────────────
-const rawData = [
-];
+// ─── RAW DATA (populado dinamicamente via importação) ────────────────────────
+let rawData = [];
 
-// ─── VENDAS (dados extraídos dos PDFs de vendas) ─────────────────────────────
-// Chave: "data|produto" → quantidade vendida
-const salesData = {
+// ─── VENDAS (chave: "data|produto" → quantidade vendida) ─────────────────────
+let salesData = {};
+
+// ─── GOOGLE SHEETS INTEGRATION ───────────────────────────────────────────────
+const SKIP_TABS = ['MODELO', 'Max adaptando'];
+let GAS_URL    = localStorage.getItem('gas_url') || '';
+let cicloData  = JSON.parse(localStorage.getItem('cicloData') || 'null') || {
+  estoqueInicial: null,
+  estoqueFinal:   null,
+  vendas:         null,
 };
+
+// Converte nome de aba (ex: "Cont 100726", "060726") → "2026-07-10"
+function parseTabDate(tabName) {
+  const m = tabName.match(/(\d{2})(\d{2})(\d{2})$/);
+  if (!m) return null;
+  return `20${m[3]}-${m[2]}-${m[1]}`;
+}
+
+// Reconstrói rawData e salesData a partir de cicloData
+function rebuildData() {
+  rawData.length = 0;
+  Object.keys(salesData).forEach(k => delete salesData[k]);
+
+  if (!cicloData.estoqueInicial) return;
+
+  const dateIni = parseTabDate(cicloData.estoqueInicial.tab) || '2026-01-01';
+
+  // Linhas do estoque inicial
+  cicloData.estoqueInicial.produtos.forEach(p => {
+    if (p.estoque > 0) rawData.push([dateIni, p.produto.trim(), p.estoque, p.estoque]);
+  });
+
+  // Linhas do estoque final (data diferente = nova linha; mesma data = atualiza col[3])
+  if (cicloData.estoqueFinal) {
+    const dateFin = parseTabDate(cicloData.estoqueFinal.tab) || dateIni;
+    if (dateFin !== dateIni) {
+      cicloData.estoqueFinal.produtos.forEach(p => {
+        if (p.estoque > 0) rawData.push([dateFin, p.produto.trim(), p.estoque, p.estoque]);
+      });
+    } else {
+      cicloData.estoqueFinal.produtos.forEach(p => {
+        const row = rawData.find(r => r[0] === dateFin && r[1] === p.produto.trim());
+        if (row) row[3] = p.estoque;
+        else if (p.estoque > 0) rawData.push([dateFin, p.produto.trim(), 0, p.estoque]);
+      });
+    }
+  }
+
+  // Vendas
+  if (cicloData.vendas) {
+    cicloData.vendas.produtos.forEach(p => {
+      if (p.saidas > 0) salesData[`${dateIni}|${p.produto.trim()}`] = p.saidas;
+    });
+  }
+}
+
+// Atualiza o texto de status do ciclo no painel
+function updateCycleStatus() {
+  const el = document.getElementById('cycle-status-text');
+  if (!el) return;
+  const ini = cicloData.estoqueInicial;
+  const fin = cicloData.estoqueFinal;
+  const vnd = cicloData.vendas;
+
+  if (!ini && !fin && !vnd) {
+    el.innerHTML = '<strong>Ciclo:</strong> nenhum dado importado';
+    return;
+  }
+  const parts = [];
+  if (ini) { const d = parseTabDate(ini.tab); parts.push(`✓ Inicial: ${ini.tab}${d ? ' ('+fmtDate(d)+')' : ''}`); }
+  else parts.push('✗ Inicial');
+  if (fin) { const d = parseTabDate(fin.tab); parts.push(`✓ Final: ${fin.tab}${d ? ' ('+fmtDate(d)+')' : ''}`); }
+  else parts.push('✗ Final');
+  if (vnd) parts.push(`✓ Vendas: ${vnd.tab}`);
+  el.innerHTML = '<strong>Ciclo:</strong> ' + parts.join(' · ');
+}
+
+// Re-popula dropdowns de dia/mês e defaults de período
+function reinitFilters() {
+  const dates  = [...new Set(rawData.map(r => r[0]))].sort();
+  const months = [...new Set(dates.map(d => d.slice(0,7)))].sort();
+
+  const selDay = document.getElementById('sel-day');
+  selDay.innerHTML = '<option value="all">Todos os dias</option>';
+  dates.forEach(d => {
+    const o = document.createElement('option'); o.value = d; o.textContent = fmtDate(d);
+    selDay.appendChild(o);
+  });
+
+  const selMonth = document.getElementById('sel-month');
+  selMonth.innerHTML = '<option value="all">Todos os meses</option>';
+  months.forEach(m => {
+    const o = document.createElement('option'); o.value = m; o.textContent = fmtMonth(m);
+    selMonth.appendChild(o);
+  });
+
+  if (dates.length) {
+    document.getElementById('date-from').value = dates[0];
+    document.getElementById('date-to').value   = dates[dates.length - 1];
+  }
+}
+
+// ─── IMPORTAÇÃO: MODAL ───────────────────────────────────────────────────────
+let _importType = null;
+
+async function openImportModal(type) {
+  _importType = type;
+  const titles = { inicial: '📋 Estoque Inicial', final: '📋 Estoque Final', vendas: '💰 Vendas' };
+  document.getElementById('modal-title').textContent    = titles[type];
+  document.getElementById('modal-subtitle').textContent = 'Selecione a aba da planilha (= data da contagem):';
+  document.getElementById('modal-tabs-list').innerHTML  =
+    '<div style="text-align:center;padding:24px;color:#aaa">⏳ Carregando abas...</div>';
+  document.getElementById('import-modal').style.display = 'flex';
+
+  try {
+    if (!GAS_URL) throw new Error('URL do Apps Script não configurada. Clique em ⚙ para configurar.');
+    const resp = await fetch(`${GAS_URL}?action=listSheets`);
+    if (!resp.ok) throw new Error('Erro HTTP ' + resp.status + '. Verifique a URL do Apps Script.');
+    const data = await resp.json();
+    if (!data.ok) throw new Error(data.error || 'Resposta inválida do Apps Script.');
+
+    const tabs = data.sheets.filter(t => !SKIP_TABS.includes(t));
+    if (!tabs.length) {
+      document.getElementById('modal-tabs-list').innerHTML =
+        '<p style="padding:16px;color:#888">Nenhuma aba disponível na planilha.</p>';
+      return;
+    }
+    document.getElementById('modal-tabs-list').innerHTML = tabs.map(tab => {
+      const d    = parseTabDate(tab);
+      const dStr = d ? ` <small style="color:#888">${fmtDate(d)}</small>` : '';
+      return `<button class="modal-tab-btn" onclick="importFromTab('${tab}','${_importType}')">${tab}${dStr}</button>`;
+    }).join('');
+
+  } catch(err) {
+    document.getElementById('modal-tabs-list').innerHTML =
+      `<div class="modal-error">${err.message}</div>
+       <div class="modal-hint">Após configurar o Apps Script, os ciclos serão listados automaticamente.</div>`;
+  }
+}
+
+async function importFromTab(tabName, type) {
+  document.getElementById('modal-tabs-list').innerHTML =
+    `<div style="text-align:center;padding:24px;color:#aaa">⏳ Importando "${tabName}"...</div>`;
+  try {
+    const resp = await fetch(`${GAS_URL}?action=readSheet&sheet=${encodeURIComponent(tabName)}`);
+    if (!resp.ok) throw new Error('Erro HTTP ' + resp.status);
+    const data = await resp.json();
+    if (!data.ok) throw new Error(data.error);
+
+    if (type === 'inicial')  cicloData.estoqueInicial = { tab: tabName, produtos: data.produtos };
+    else if (type === 'final') cicloData.estoqueFinal = { tab: tabName, produtos: data.produtos };
+    else                     cicloData.vendas        = { tab: tabName, produtos: data.produtos };
+
+    localStorage.setItem('cicloData', JSON.stringify(cicloData));
+    closeImportModal();
+    rebuildData();
+    updateCycleStatus();
+    reinitFilters();
+    render();
+  } catch(err) {
+    document.getElementById('modal-tabs-list').innerHTML =
+      `<div class="modal-error">Erro: ${err.message}</div>
+       <button onclick="closeImportModal()" style="margin:12px 16px;padding:8px 14px;background:#4a90e2;color:white;border:none;border-radius:6px;cursor:pointer">Fechar</button>`;
+  }
+}
+
+function closeImportModal() {
+  document.getElementById('import-modal').style.display = 'none';
+}
+
+function clearCiclo() {
+  if (!confirm('Limpar todos os dados do ciclo atual?')) return;
+  cicloData = { estoqueInicial: null, estoqueFinal: null, vendas: null };
+  localStorage.setItem('cicloData', JSON.stringify(cicloData));
+  rebuildData();
+  updateCycleStatus();
+  reinitFilters();
+  render();
+}
+
+function toggleConfig() {
+  const p = document.getElementById('config-panel');
+  p.style.display = p.style.display === 'none' ? 'block' : 'none';
+  if (p.style.display === 'block') document.getElementById('gas-url-input').value = GAS_URL;
+}
+
+function saveGASURL() {
+  GAS_URL = document.getElementById('gas-url-input').value.trim();
+  localStorage.setItem('gas_url', GAS_URL);
+  toggleConfig();
+}
 
 // ─── STATE ───────────────────────────────────────────────────────────────────
 let mode = 'day';
@@ -429,29 +841,9 @@ let vendidos = JSON.parse(localStorage.getItem('vendidos') || '{}');
 
 // ─── INIT ────────────────────────────────────────────────────────────────────
 function init() {
-  const dates = [...new Set(rawData.map(r => r[0]))].sort();
-  const months = [...new Set(dates.map(d => d.slice(0,7)))].sort();
-
-  const selDay = document.getElementById('sel-day');
-  dates.forEach(d => {
-    const opt = document.createElement('option');
-    opt.value = d;
-    opt.textContent = fmtDate(d);
-    selDay.appendChild(opt);
-  });
-
-  const selMonth = document.getElementById('sel-month');
-  months.forEach(m => {
-    const opt = document.createElement('option');
-    opt.value = m;
-    opt.textContent = fmtMonth(m);
-    selMonth.appendChild(opt);
-  });
-
-  if (dates.length) {
-    document.getElementById('date-from').value = dates[0];
-    document.getElementById('date-to').value = dates[dates.length - 1];
-  }
+  rebuildData();
+  updateCycleStatus();
+  reinitFilters();
   render();
 }
 
