@@ -746,21 +746,40 @@ function reinitFilters() {
 const SHEET_ID  = '1NPZBgdrulzSbgxkF0_NNegUtidbDm6B4zkXoNl6aN7Q';
 const SHARE_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit#sharing`;
 
-function csvUrl(sheetName) {
-  return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&sheet=${encodeURIComponent(sheetName)}`;
+function gvizUrl(sheetName) {
+  return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&headers=1&sheet=${encodeURIComponent(sheetName)}`;
 }
 
-// Testa se a planilha está pública tentando buscar uma aba conhecida
+function parseGviz(text) {
+  const json = JSON.parse(text.match(/setResponse\(([\s\S]*)\)/)[1]);
+  const cols = json.table.cols.map(c => c.label.toLowerCase().trim());
+  const pi = cols.findIndex(h => h.startsWith('produto'));
+  const ei = cols.findIndex(h => h === 'estoque');
+  const si = cols.findIndex(h => h.includes('saída') || h.includes('saida'));
+  if (pi === -1) return [];
+  return json.table.rows.map(row => {
+    const nome = row.c[pi]?.v?.toString().trim();
+    if (!nome) return null;
+    return {
+      produto: nome,
+      estoque: ei >= 0 ? (row.c[ei]?.v || 0) : 0,
+      saidas:  si >= 0 ? (row.c[si]?.v || 0) : 0,
+    };
+  }).filter(Boolean);
+}
+
+// Testa se a planilha está pública
 async function checkSheetPublic() {
   try {
-    const resp = await fetch(csvUrl('MODELO'), { signal: AbortSignal.timeout(6000) });
-    return resp.ok;
+    const resp = await fetch(gvizUrl('MODELO'), { signal: AbortSignal.timeout(6000) });
+    if (!resp.ok) return false;
+    const txt = await resp.text();
+    return txt.includes('setResponse');
   } catch { return false; }
 }
 
-// Descobre abas existentes testando padrões de data do mês atual e anteriores
+// Descobre abas existentes testando padrões de data
 async function discoverTabs() {
-  // Gera candidatos DDMMYY e "Cont DDMMYY" para os últimos 120 dias
   const today = new Date();
   const candidates = [];
   for (let i = 0; i < 120; i++) {
@@ -771,52 +790,20 @@ async function discoverTabs() {
     candidates.push(`${dd}${mm}${yy}`);
     candidates.push(`Cont ${dd}${mm}${yy}`);
   }
-
   const found = [];
-  // Verifica em lotes paralelos de 8
   for (let i = 0; i < candidates.length; i += 8) {
     const batch = candidates.slice(i, i + 8);
     const results = await Promise.all(batch.map(async name => {
       try {
-        const resp = await fetch(csvUrl(name), { signal: AbortSignal.timeout(4000) });
+        const resp = await fetch(gvizUrl(name), { signal: AbortSignal.timeout(4000) });
         if (!resp.ok) return null;
         const txt = await resp.text();
-        // Aba válida tem cabeçalho com vírgulas e pelo menos uma linha de dados
-        return txt.split('\n').length > 2 ? name : null;
+        return txt.includes('setResponse') && !txt.includes('"status":"error"') ? name : null;
       } catch { return null; }
     }));
     found.push(...results.filter(Boolean));
   }
   return found.filter(n => !SKIP_TABS.includes(n));
-}
-
-// Parse CSV → [{produto, estoque, saidas}]
-function parseSheetCSV(text) {
-  const lines = text.trim().split('\n');
-  if (lines.length < 2) return [];
-  function parseLine(line) {
-    const r = []; let cur = '', inQ = false;
-    for (const ch of line + ',') {
-      if (ch === '"') inQ = !inQ;
-      else if (ch === ',' && !inQ) { r.push(cur.trim()); cur = ''; }
-      else cur += ch;
-    }
-    return r;
-  }
-  const headers = parseLine(lines[0]).map(h => h.toLowerCase().trim());
-  const pi  = headers.findIndex(h => h.startsWith('produto'));
-  const ei  = headers.findIndex(h => h === 'estoque');
-  const ci  = headers.findIndex(h => h === 'contagem');   // coluna preenchida na contagem física
-  const si  = headers.findIndex(h => h.includes('saída') || h.includes('saida'));
-  if (pi === -1) return [];
-  return lines.slice(1).map(l => {
-    const c    = parseLine(l);
-    const nome = c[pi]?.trim();
-    if (!nome) return null;
-    const estoque = ei >= 0 ? (parseFloat(c[ei]) || 0) : 0;
-    const saidas  = si >= 0 ? (parseFloat(c[si]) || 0) : 0;
-    return { produto: nome, estoque, saidas };
-  }).filter(Boolean);
 }
 
 // ─── MODAL ───────────────────────────────────────────────────────────────────
@@ -880,10 +867,10 @@ async function importFromTab(tabName, type) {
   document.getElementById('modal-tabs-list').innerHTML =
     `<div style="text-align:center;padding:24px;color:#aaa">⏳ Importando "${tabName}"...</div>`;
   try {
-    const resp = await fetch(csvUrl(tabName), { signal: AbortSignal.timeout(10000) });
+    const resp = await fetch(gvizUrl(tabName), { signal: AbortSignal.timeout(10000) });
     if (!resp.ok) throw new Error('Erro HTTP ' + resp.status);
     const text = await resp.text();
-    const produtos = parseSheetCSV(text);
+    const produtos = parseGviz(text);
     if (!produtos.length) throw new Error('Nenhum produto encontrado na aba "' + tabName + '".');
 
     if (type === 'inicial')    cicloData.estoqueInicial = { tab: tabName, produtos };
