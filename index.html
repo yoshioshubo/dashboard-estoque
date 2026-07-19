@@ -643,7 +643,14 @@ let rawData = [];
 let salesData = {};
 
 // ─── GOOGLE SHEETS INTEGRATION ───────────────────────────────────────────────
-const SKIP_TABS = ['MODELO', 'Max adaptando'];
+const SKIP_TABS      = ['MODELO', 'Max adaptando'];
+const SALES_SHEET_ID = '1mTIIpybSyHW8i0Z4jrwzy8pZA9MH-0_H';
+
+function norm(s) {
+  return (s || '').toLowerCase().trim()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/\s+/g, ' ');
+}
 let GAS_URL    = localStorage.getItem('gas_url') || '';
 let cicloData  = JSON.parse(localStorage.getItem('cicloData') || 'null') || {
   estoqueInicial: null,
@@ -688,10 +695,15 @@ function rebuildData() {
     }
   }
 
-  // Vendas
-  if (cicloData.vendas) {
-    cicloData.vendas.produtos.forEach(p => {
-      if (p.saidas > 0) salesData[`${dateIni}|${p.produto.trim()}`] = p.saidas;
+  // Vendas — match por nome normalizado contra nomes do estoque
+  if (cicloData.vendas && cicloData.estoqueInicial) {
+    const stockNames = cicloData.estoqueInicial.produtos.map(p => p.produto.trim());
+    cicloData.vendas.forEach(v => {
+      const vNorm = norm(v.item);
+      const match = stockNames.find(s => norm(s) === vNorm);
+      if (match && v.qtde > 0) {
+        salesData[`${dateIni}|${match}`] = (salesData[`${dateIni}|${match}`] || 0) + v.qtde;
+      }
     });
   }
 }
@@ -813,10 +825,14 @@ async function openImportModal(type) {
   _importType = type;
   const titles = { inicial: '📋 Estoque Inicial', final: '📋 Estoque Final', vendas: '💰 Vendas' };
   document.getElementById('modal-title').textContent    = titles[type];
-  document.getElementById('modal-subtitle').textContent = 'Selecione a data da contagem:';
+  document.getElementById('modal-subtitle').textContent = type === 'vendas'
+    ? 'Importando da planilha de vendas...'
+    : 'Selecione a data da contagem:';
   document.getElementById('modal-tabs-list').innerHTML  =
-    '<div style="text-align:center;padding:24px;color:#aaa">⏳ Verificando acesso à planilha...</div>';
+    '<div style="text-align:center;padding:24px;color:#aaa">⏳ Aguarde...</div>';
   document.getElementById('import-modal').style.display = 'flex';
+
+  if (type === 'vendas') { await importVendas(); return; }
 
   // Verifica acesso
   const isPublic = await checkSheetPublic();
@@ -883,6 +899,49 @@ async function importFromTab(tabName, type) {
     updateCycleStatus();
     reinitFilters();
     render();
+  } catch(err) {
+    document.getElementById('modal-tabs-list').innerHTML =
+      `<div class="modal-error">Erro: ${err.message}</div>
+       <button onclick="closeImportModal()" style="margin:12px 16px;padding:8px 14px;background:#4a90e2;color:white;border:none;border-radius:6px;cursor:pointer">Fechar</button>`;
+  }
+}
+
+async function importVendas() {
+  try {
+    const url = `https://docs.google.com/spreadsheets/d/${SALES_SHEET_ID}/gviz/tq?tqx=out:json&headers=1`;
+    const resp = await fetch(url, { signal: AbortSignal.timeout(10000) });
+    if (!resp.ok) throw new Error('Erro HTTP ' + resp.status);
+    const txt  = await resp.text();
+    const json = JSON.parse(txt.match(/setResponse\(([\s\S]*)\)/)[1]);
+
+    const cols    = json.table.cols.map(c => c.label.toLowerCase().trim());
+    const itemIdx = cols.findIndex(h => h === 'item');
+    const qtdeIdx = cols.findIndex(h => h.includes('quant'));
+    if (itemIdx === -1 || qtdeIdx === -1)
+      throw new Error('Colunas "Item" e "Quantidade" não encontradas na planilha de vendas.');
+
+    const vendas = json.table.rows
+      .map(row => ({ item: row.c[itemIdx]?.v?.toString().trim() || '', qtde: row.c[qtdeIdx]?.v || 0 }))
+      .filter(v => v.item && v.qtde > 0);
+
+    if (!vendas.length) throw new Error('Nenhum item com quantidade encontrado.');
+
+    // Salva em cicloData e rebuild
+    cicloData.vendas = vendas;
+    localStorage.setItem('cicloData', JSON.stringify(cicloData));
+    closeImportModal();
+    rebuildData();
+    updateCycleStatus();
+    render();
+
+    // Mostra resumo do match
+    const stockNames = cicloData.estoqueInicial?.produtos.map(p => p.produto.trim()) || [];
+    const matched   = vendas.filter(v => stockNames.find(s => norm(s) === norm(v.item)));
+    const unmatched = vendas.filter(v => !stockNames.find(s => norm(s) === norm(v.item)));
+    if (unmatched.length) {
+      console.warn('Vendas sem correspondência no estoque:', unmatched.map(v => v.item));
+    }
+    alert(`✅ ${matched.length} itens importados.\n${unmatched.length ? '⚠️ ' + unmatched.length + ' sem correspondência (ver console).' : ''}`);
   } catch(err) {
     document.getElementById('modal-tabs-list').innerHTML =
       `<div class="modal-error">Erro: ${err.message}</div>
@@ -1002,11 +1061,11 @@ function getTableRows(dates) {
 
     if (daysWithData.length === 0) return null;
 
-    // Variação do período = soma das variações individuais de cada dia
-    const variacaoPeriodo = daysWithData.reduce((sum, row) => sum + (row[3] - row[2]), 0);
-
     const firstRow = rawData.find(r => r[0] === firstDate && r[1] === p);
     const lastRow  = rawData.find(r => r[0] === lastDate  && r[1] === p);
+
+    // Variação = estoque final (último dia) − estoque inicial (primeiro dia)
+    const variacaoPeriodo = (lastRow ? lastRow[3] : 0) - (firstRow ? firstRow[2] : 0);
 
     return {
       produto:      p,
